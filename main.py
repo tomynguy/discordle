@@ -10,17 +10,16 @@ intents.members = True
 
 client = discord.Client(intents=intents)
 
+channelMessages = {}
+
 @client.event
 async def on_ready():
     print(f'We have logged in as {client.user}')
 
-def getMessage(messages):
-    random_message = random.choice(messages)
-    if random_message.author == None or random_message.author.bot:
-        return getMessage(messages)
+def checkMessage(message):
+    if message.author != None and not message.author.bot and message.author.name != 'Deleted User' and len(message.content) > 4:
+        return True
     
-    return random_message
-
 def getAuthor(server, random_message):
     author = [None, None, None]
     if random_message.author.global_name != None:
@@ -47,18 +46,17 @@ async def on_message(message):
 
         messages = []
 
-        random_channel = None
-        while True:
-            random_channel = random.choice(text_channels)
-            permissions = random_channel.permissions_for(server.me) 
-            if permissions.read_message_history:
-                break
-        messages.extend([message async for message in random_channel.history(limit=1000, oldest_first=True)])
+        if server in channelMessages:
+            messages = channelMessages[server]
+        else:
+            for channel in text_channels:
+                permissions = channel.permissions_for(server.me) 
+                if not permissions.read_message_history:
+                    continue
+                messages.extend([message async for message in channel.history(limit=1000) if checkMessage(message)])
+            channelMessages.update({server : messages})
 
-        if message in messages:
-            del messages[messages.index(message)]
-
-        random_message = getMessage(messages)
+        random_message = random.choice(messages)
         message_content = random_message.content
         for i in range(len(random_message.attachments)):
             message_content += "\n" + random_message.attachments[i].url
@@ -79,7 +77,7 @@ async def on_message(message):
         try:
             # Wait for user guesses within the time limit
             while True:
-                guess_message = await client.wait_for('message', check=lambda m: m.channel == message.channel, timeout=60)
+                guess_message = await client.wait_for('message', check=lambda m: m.channel == message.channel, timeout=20)
                 if check_winner(guess_message):
                     await guess_message.add_reaction('🥶')  # Correct guess reaction
                     await message.channel.send(f"{guess_message.author.mention} is the winner! ", embed=embed)
