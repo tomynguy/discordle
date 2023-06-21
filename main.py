@@ -17,7 +17,7 @@ async def on_ready():
     print(f'We have logged in as {client.user}')
 
 def checkMessage(message):
-    if message.author != None and not message.author.bot and message.author.name != 'Deleted User' and len(message.content) > 4:
+    if message.author != None and not message.author.bot and message.author.name != 'Deleted User' and (len(message.content) > 4 or len(message.attachments) > 0):
         return True
     
 def getAuthor(server, random_message):
