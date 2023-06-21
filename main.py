@@ -21,6 +21,11 @@ def getMessage(messages):
     
     return random_message
 
+def getAuthor(server, random_message):
+    if server.get_member(random_message.author.id) == None:
+        return [random_message.author.global_name, random_message.author.name]
+    return [random_message.author.global_name, random_message.author.name, server.get_member(random_message.author.id).nick]
+
 @client.event
 async def on_message(message):
     if message.author == client.user:
@@ -37,20 +42,28 @@ async def on_message(message):
 
         messages = []
 
-        for channel in text_channels:
-            # Check if the bot has permission to read message history in the channel
-            permissions = channel.permissions_for(server.me)
-            if not permissions.read_message_history:
-                continue
-            messages.extend([message async for message in channel.history(limit=100)])
+        random_channel = None
+        while True:
+            random_channel = random.choice(text_channels)
+            permissions = random_channel.permissions_for(server.me) 
+            if permissions.read_message_history:
+                break
+        messages.extend([message async for message in random_channel.history(limit=1000, oldest_first=True)])
 
-        del messages[messages.index(message)]
+        if message in messages:
+            del messages[messages.index(message)]
+
         random_message = getMessage(messages)
         message_content = random_message.content
         for i in range(len(random_message.attachments)):
             message_content += "\n" + random_message.attachments[i].url
-        author = (random_message.author.global_name, random_message.author.name, server.get_member(random_message.author.id).nick)
-        print(f"{author[0]} ({author[1]}) ({author[2]}): {message_content}")
+
+        author = getAuthor(server, random_message)
+
+        if len(author) > 2:
+            print(f"{author[0]} ({author[1]}) ({author[2]}): {message_content}")
+        else:
+            print(f"{author[0]} ({author[1]}) (None): {message_content}")
 
         # Start the game by sending the randomly selected message
         await message.channel.send(f"Guess the user who said this message:\n{message_content}")
@@ -60,7 +73,7 @@ async def on_message(message):
         def check_winner(m):
             return (m.content.lower() == author[0].lower() or 
                     m.content.lower() == author[1].lower() or 
-                    m.content.lower() == author[2].lower()) and m.channel == message.channel
+                    (len(author) > 2 and m.content.lower() == author[2].lower())) and m.channel == message.channel
         
         try:
             # Wait for user guesses within the time limit
