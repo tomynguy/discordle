@@ -22,9 +22,14 @@ def getMessage(messages):
     return random_message
 
 def getAuthor(server, random_message):
-    if server.get_member(random_message.author.id) == None:
-        return [random_message.author.global_name, random_message.author.name]
-    return [random_message.author.global_name, random_message.author.name, server.get_member(random_message.author.id).nick]
+    author = [None, None, None]
+    if random_message.author.global_name != None:
+        author[0] = random_message.author.global_name
+    if random_message.author.name != None:
+        author[1] = random_message.author.name
+    if server.get_member(random_message.author.id) != None:
+        author[2] = server.get_member(random_message.author.id).nick
+    return author
 
 @client.event
 async def on_message(message):
@@ -59,11 +64,7 @@ async def on_message(message):
             message_content += "\n" + random_message.attachments[i].url
 
         author = getAuthor(server, random_message)
-
-        if len(author) > 2:
-            print(f"{author[0]} ({author[1]}) ({author[2]}): {message_content}")
-        else:
-            print(f"{author[0]} ({author[1]}) (None): {message_content}")
+        print(f"{author[0]} ({author[1]}) ({author[2]}): {message_content}")
 
         # Start the game by sending the randomly selected message
         await message.channel.send(f"Guess the user who said this message:\n{message_content}")
@@ -71,9 +72,9 @@ async def on_message(message):
         embed.description = "[Message](" + random_message.jump_url + ")"
         
         def check_winner(m):
-            return (m.content.lower() == author[0].lower() or 
-                    m.content.lower() == author[1].lower() or 
-                    (len(author) > 2 and m.content.lower() == author[2].lower())) and m.channel == message.channel
+            return ((author[0] != None and m.content.lower() == author[0].lower()) or 
+                    (author[1] != None and m.content.lower() == author[1].lower()) or 
+                    (author[2] != None and m.content.lower() == author[2].lower())) and m.channel == message.channel
         
         try:
             # Wait for user guesses within the time limit
