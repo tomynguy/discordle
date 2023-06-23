@@ -1,9 +1,9 @@
-const { Client, GatewayIntentBits, ChannelType, CHANNEL_TYPES } = require('discord.js');
+const { Client, GatewayIntentBits, ChannelType, CHANNEL_TYPES, PermissionsBitField } = require('discord.js');
 
 const fs = require('fs');
 const csvWriter = require('csv-writer').createObjectCsvWriter;
 
-let messagesData = [];
+let {randRoom} = require('./server.js');
 
 const client = new Client({
 	intents: [
@@ -19,6 +19,7 @@ client.once('ready', () => {
 });
 
 client.on('messageCreate', async (message) => {
+    let messagesData = [];
     if (message.content.startsWith('!fetch')) {
         await message.reply('Fetching messages...');
         
@@ -28,12 +29,10 @@ client.on('messageCreate', async (message) => {
             (channel) => channel.type === ChannelType.GuildText
         );
 
-        console.log(textChannels.size);
         for (const [, channel] of textChannels) {
-            console.log('balls');
-            // const permissions = channel.permissionsFor(client.user);
-            // if (!permissions.has('READ_MESSAGE_HISTORY')) continue;
-
+            const botPermissionsIn = message.guild.members.me.permissionsIn(channel);
+            if (!botPermissionsIn.has(PermissionsBitField.Flags.ViewChannel)) continue;
+            
             const fetchedMessages = await channel.messages.fetch({ limit: 100 });
             fetchedMessages.forEach((msg) => {
                 if (!msg.author.bot && msg.content.length > 0) {
@@ -42,14 +41,18 @@ client.on('messageCreate', async (message) => {
                         displayName: msg.author.username,
                         nickname: msg.member ? msg.member.nickname : ''
                     };
-        
+                    
+                    let attachments = msg.attachments.map((attachment) => attachment.url);
                     messagesData.push({
                         guild: message.guild.name,
+                        guildID: message.guild.id,
                         channel: channel.name,
+                        channelID: channel.id,
                         'author.globalName': author.globalName,
                         'author.displayName': author.displayName,
                         'author.nickname': author.nickname,
-                        message: msg.content
+                        message: msg.content,
+                        attachments: attachments
                     });
                 }
             });
@@ -60,11 +63,14 @@ client.on('messageCreate', async (message) => {
             path: `parsedMessages/${message.guild.id}.csv`,
             header: [
                 { id: 'guild', title: 'Guild' },
+                { id: 'guildID', title: 'GuildID' },
                 { id: 'channel', title: 'Channel' },
+                { id: 'channelID', title: 'ChannelID' },
                 { id: 'author.globalName', title: 'Author(Global)' },
                 { id: 'author.displayName', title: 'Author(Display)' },
                 { id: 'author.nickname', title: 'Author(Nickname)' },
-                { id: 'message', title: 'Message' }
+                { id: 'message', title: 'Message' },
+                { id: 'attachments', title: 'Attachments' }
             ]
         });
 
@@ -72,14 +78,18 @@ client.on('messageCreate', async (message) => {
             .writeRecords(messagesData)
             .then(() => {
                 console.log(`Messages fetched and saved to ${message.guild.id}.csv`);
-                message.reply(`Messages fetched and saved to ${message.guild.id}.csv`);
+                message.reply(`${randRoom(message.guild.id)} has been created.`);
             })
             .catch((err) => {
                 console.error('Error writing to CSV file:', err);
                 message.reply('An error occurred while saving the messages.');
             });
     }
+
 });
+  
+
+
 
 let token = fs.readFileSync('token.txt', 'utf8');
 client.login(token);
