@@ -1,12 +1,13 @@
+// server.js
 const express = require('express');
 const app = express();
 const server = require('http').createServer(app);
 const io = require('socket.io')(server);
 
 const fs = require('fs');
-const csv = require('csv-parser')
+const csv = require('csv-parser');
 
-// ['guild', 'guildID', 'channel', 'channelID', 'author.globalName', 'author.displayName', 'author.nickname', 'message', 'attachments']
+const PORT = 3000;
 
 let rooms = new Map();
 module.exports = {
@@ -17,21 +18,9 @@ app.use(express.static('public'));
 
 app.use(express.json());
 
-app.post('/create-room', (req, res) => {
-  const roomID = req.body.roomID;
-
-  // Create a room using the received room ID
-  // Add any additional logic here based on your requirements
-
-  // Emit the room ID to connected clients
-  io.emit('room-created', roomID);
-
-  res.sendStatus(200);
-});
-
 function randRoom(file, recurse = 0) {
-    let room = "Room";
-    for (let i = 0; i < (5 + recurse / 5); i++) room += Math.floor(Math.random() * 10);
+    let room = 'Room';
+    for (let i = 0; i < 5 + recurse / 5; i++) room += Math.floor(Math.random() * 10);
     if (rooms.has(room)) room = randRoom(file, recurse + 1);
     else rooms.set(room, file);
     return room;
@@ -44,17 +33,33 @@ function parseMessageData(path) {
     fs.createReadStream(`parsedMessages/${path}`)
     .pipe(csv())
     .on('data', (data) => {
-      // Process each row of data
-      results.push(data);
+        // Process each row of data
+        results.push(data);
     })
     .on('end', () => {
-      // CSV parsing is complete, print results
-      console.log(results);
+        // CSV parsing is complete, print results
+        console.log(results);
     });
 
     return results;
 }
 
-server.listen(3000, () => {
-  console.log('Server running on port 3000');
+io.on('connection', (socket) => {
+    console.log('New user connected');
+
+    // Event listener for join event
+    socket.on('join', ({ roomID, username }) => {
+        // Check if the requested room exists
+        if (!rooms.has(roomID)) {
+            socket.emit('error', 'Room not found');
+            return;
+        }
+
+        // Emit joined event to the client
+        socket.emit('joined', { roomID, username });
+    });
+});
+
+server.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 });

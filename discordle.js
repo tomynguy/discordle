@@ -78,7 +78,7 @@ client.on('messageCreate', async (message) => {
             .writeRecords(messagesData)
             .then(() => {
                 console.log(`Messages fetched and saved to ${message.guild.id}.csv`);
-                message.reply(`${randRoom(message.guild.id)} has been created.`);
+                message.reply(`${randRoom(message.guild.id + '.csv')} has been created.`);
             })
             .catch((err) => {
                 console.error('Error writing to CSV file:', err);
