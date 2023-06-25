@@ -8,8 +8,8 @@ const roomInfoDiv = document.getElementById('roomInfo');
 
 // Event listener for join button
 joinButton.addEventListener('click', () => {
-    const roomID = roomIDInput.value.trim();
-    const username = usernameInput.value.trim();
+    const roomID = roomIDInput.value;
+    const username = usernameInput.value;
 
     // Validate input
     if (roomID === '' || username === '') {
@@ -30,10 +30,21 @@ socket.on('connect', () => {
 });
 
 socket.on('joined', ({ roomID, username }) => {
-    // Hide join form and display room information
-    roomIDDisplay.textContent = roomID;
-    usernameDisplay.textContent = username;
-    roomInfoDiv.style.display = 'block';
+    // Save roomID and username
+    sessionStorage.setItem('roomID', roomID);
+    sessionStorage.setItem('username', username);
+
+    // Request channels map from server and await for channelsReponse message
+    socket.emit('getChannels', roomID);
+});
+
+socket.on('channelsResponse', (channels) => {
+    // save channels
+    sessionStorage.setItem('channels', channels);
+    console.log(`Recieved channels map: ${channels}`);
+
+    // redirect to room page
+    window.location.href = 'room.html';
 
     console.log(`Joined Room: ${roomID}`);
     console.log(`Username: ${username}`);
