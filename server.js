@@ -11,18 +11,21 @@ const PORT = 3000;
 
 let rooms = new Map();
 module.exports = {
-    randRoom: randRoom
+    createRoom: createRoom
 };
 
 app.use(express.static('public'));
 
 app.use(express.json());
 
-function randRoom(file, recurse = 0) {
+function createRoom(file, recurse = 0) {
     let room = 'Room';
     for (let i = 0; i < 5 + recurse / 5; i++) room += Math.floor(Math.random() * 10);
-    if (rooms.has(room)) room = randRoom(file, recurse + 1);
-    else rooms.set(room, file);
+    if (rooms.has(room)) room = createRoom(file, recurse + 1);
+    else {
+        // Valid room ID, so create and set up room
+        rooms.set(room, parseMessageData(file));
+    }
     return room;
 }
 

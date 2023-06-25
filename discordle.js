@@ -3,7 +3,7 @@ const { Client, GatewayIntentBits, ChannelType, CHANNEL_TYPES, PermissionsBitFie
 const fs = require('fs');
 const csvWriter = require('csv-writer').createObjectCsvWriter;
 
-let {randRoom} = require('./server.js');
+let {createRoom} = require('./server.js');
 
 const client = new Client({
 	intents: [
@@ -78,7 +78,7 @@ client.on('messageCreate', async (message) => {
             .writeRecords(messagesData)
             .then(() => {
                 console.log(`Messages fetched and saved to ${message.guild.id}.csv`);
-                message.reply(`${randRoom(message.guild.id + '.csv')} has been created.`);
+                message.reply(`${createRoom(message.guild.id + '.csv')} has been created.`);
             })
             .catch((err) => {
                 console.error('Error writing to CSV file:', err);
