@@ -1,4 +1,3 @@
 # Ignore the folder containing CSV files
 parsedMessages/
-*
-!.gitignore
+!parsedMessages/
