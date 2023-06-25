@@ -10,6 +10,7 @@ const csv = require('csv-parser');
 const PORT = 3000;
 
 let rooms = new Map();
+let roomUsers = new Map();
 module.exports = {
     createRoom: createRoom
 };
@@ -25,6 +26,7 @@ function createRoom(file, recurse = 0) {
     else {
         // Valid room ID, so create and set up room
         rooms.set(room, parseMessageData(file));
+        roomUsers.set(room, new Set());
     }
     return room;
 }
@@ -53,13 +55,21 @@ io.on('connection', (socket) => {
     // Event listener for join event
     socket.on('join', ({ roomID, username }) => {
         // Check if the requested room exists
-        if (!rooms.has(roomID)) {
+        let room = roomUsers.get(roomID);
+        if (room == null) {
             socket.emit('error', 'Room not found');
-            return;
         }
 
-        // Emit joined event to the client
-        socket.emit('joined', { roomID, username });
+        // Check if username already taken in room
+        else if (room.has(username)) {
+            socket.emit('error', 'Username Taken');
+        }
+
+         // Emit joined event to the client and update map
+        else {
+            socket.emit('joined', { roomID, username });
+            room.add(username);
+        }
     });
 });
 
