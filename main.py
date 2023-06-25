@@ -22,12 +22,16 @@ def checkMessage(message):
     
 def getAuthor(server, random_message):
     author = [None, None, None]
-    if random_message.author.global_name != None:
+
+    try:
         author[0] = random_message.author.global_name
-    if random_message.author.name != None:
+    except AttributeError:
+        pass
+    if random_message.author.name is not None:
         author[1] = random_message.author.name
-    if server.get_member(random_message.author.id) != None:
-        author[2] = server.get_member(random_message.author.id).nick
+    member = server.get_member(random_message.author.id)
+    if member is not None:
+        author[2] = member.nick
     return author
 
 @client.event
