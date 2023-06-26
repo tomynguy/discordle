@@ -8,12 +8,18 @@ const fs = require('fs');
 const csv = require('csv-parser');
 
 const PORT = 3001;
-
+let roomList = new Map([['balls', new Set()]]);
 let roomData = new Map([['balls', undefined]]);
-let roomChannels = new Map([['balls', new Map([[1234, 'channel2']])]]); // map from roomID -> map of (channelID, channel) for all text channels associated with room
-let roomUsers = new Map([['balls', new Set()]]);
-let socket_to_user = new Map();
-let socketIsHost = new Map();
+// map from room -> map about components of the parsed data (i.e. channels names/ids, usernames), keys: "channels", "users"
+let roomFilterData = new Map([
+    ['balls', 
+    {"channels": new Map([[1, "channel1"]]),
+     "usernames": new Set([{
+        globalName: "tomynguy",
+        displayName: "Nathan",
+        nickname: "WackyFlacky"}]),
+    }]
+]);
 
 module.exports = {
     createRoom: createRoom
@@ -29,9 +35,9 @@ function createRoom(file, recurse = 0) {
     if (roomData.has(room)) room = createRoom(file, recurse + 1);
     else {
         // Valid room ID, so create and set up room
+        roomList.set(room, new Set());
         roomData.set(room, parseMessageData(file));
-        roomChannels.set(room, getChannels(room));
-        roomUsers.set(room, new Set());
+        roomFilterData.set(room, getFilterData(room));
     }
     return room;
 }
@@ -54,15 +60,31 @@ function parseMessageData(path) {
     return results;
 }
 
-function getChannels(roomID) {
+function getFilterData(roomID) {
     let result = new Map();
+
+    let channels = new Map();
+    let usernames = new Set();
     let data = roomData.get(roomID);
     for (let i = 0; i < data.length; i++) {
         const row = data[i];
-        if(!result.has(row.channelID)) {
-            result.set(row.channelID, row.channel);
+
+        // add channel
+        if(!channels.has(row.channelID)) {
+            channels.set(row.channelID, row.channel);
         }
+        
+        // add username
+        const username = {
+            globalName: row.author.globalName,
+            displayName: row.author.displayName,
+            nickname: row.nickname
+        }
+        usernames.add(username);
     }
+
+    result.set("channels", channels);
+    result.set("usernames", usernames);
 
     return result;
 }
@@ -70,60 +92,50 @@ function getChannels(roomID) {
 io.on('connection', (socket) => {
     console.log('New user connected');
 
-    // Event listener for join event
+    // Validates client join request
+    // Starts joining process if valid, otherwise send error
     socket.on('join', ({ roomID, username }) => {
         roomID = roomID.toLowerCase();
-        // Check if the requested room exists
-        let room = roomUsers.get(roomID);
-        console.log(roomUsers);
-        if (room == null) socket.emit('error', 'Room not found');
-
-        // Check if username already taken in room
-        else if (room.has(username)) socket.emit('error', 'Username Taken');
-
-         // Emit joined event to the client and update map
-        else {
-            room.add(username);
-            socket_to_user.set(socket, [roomID, username]);
-            socket.join(roomID);
+        if (!roomList.has(roomID)) {
+            socket.emit('error', 'Room not found');
+        } else if (roomList.get(roomID).has(username)) {
+            socket.emit('error', 'Username Taken');
+        } else {
+            socket.room = roomID;
+            socket.username = username;
             socket.emit('joined', { roomID, username });
-            if (room.size == 1) socketIsHost.add(socket, roomID);
         }
     });
 
-        // Event listener for join event
+        // Updates rooms upon client disconnection
         socket.on('disconnect', () => {
-            // Check if socket is in a room
-            let room_user = socket_to_user.get(socket);
-            if (room_user != undefined) {
-                // If in a room, remove from room userlist
-                let room = roomUsers.get(room_user[0]);
-                room.delete(room_user[1]);
-
-                // If socket is host, delete from host list
-                let host = socketIsHost.get(socket);
-                if (host != undefined) {
-                    socketIsHost.delete(socket);
-                    
-                    // If room has more users, assign new host
-                    if (room.size > 0) {
-                        socketIsHost.set(room.values().next().value, host);
-                        console.log('New Host Set');
-                    }
-                }
+            console.log('Client Disconnected');
+            let room = roomList.get(socket.room);
+            if (room) {
+                room.delete(socket.username);
             }
         });
         
-        // Event listener for getChannels event
-        // returns: a Map (channelID -> channelName) of all channels associated with this room
-        socket.on('getChannels', (roomID) => {
+        // Event listener for getFilterData event
+        // returns: a Map of all filter data (channels, usernames) associated with this room
+        socket.on('getFilterData', (roomID) => {
             roomID = roomID.toLowerCase();
-            if(roomChannels.has(roomID)) {
-                socket.emit('channelsResponse', roomChannels.get(roomID));
+            if (roomFilterData.has(roomID)) {
+                const serializedData = {
+                    "channels": JSON.stringify(Array.from(roomFilterData.get(roomID).channels)),
+                    "usernames": JSON.stringify(Array.from(roomFilterData.get(roomID).usernames))
+                }
+
+                socket.emit('filterDataResponse', JSON.stringify(serializedData));
             }
             else {
-                socket.emit('error', 'Channel data for room not found');
+                socket.emit('error', 'Filter data for room not found');
             }
+        });
+
+        // Get attributes
+        socket.on('balls', () => {
+            console.log(socket.username, socket.room);
         });
 });
 

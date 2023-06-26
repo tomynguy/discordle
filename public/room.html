@@ -20,35 +20,6 @@
     </div>
   </div>
   <script src="https://cdn.socket.io/4.3.2/socket.io.min.js"></script>
-  <script src="client.js"></script>
-  <script>
-    // Retrieve room ID and username from sessionStorage
-    const roomID = sessionStorage.getItem('roomID');
-    const username = sessionStorage.getItem('username');
-
-    // Update display components
-    document.getElementById('roomIDDisplay').textContent += roomID;
-    document.getElementById('usernameDisplay').textContent += username;
-
-    // Retrieve channel elements and data
-    const channels = new Map(JSON.parse(sessionStorage.getItem('channels')));
-    const channelFilterForm = document.getElementsById('channelFilter');
-
-    // Iterate over channels and create checkbox for each
-    channels.forEach((channelID, channelName) => {
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.name = 'channel';
-        checkbox.value = channelID;
-
-        const label = document.createElement('label');
-        label.textContent = channelName;
-        label.appendChild(checkbox);
-
-        channelFilterForm.appendChild(label);
-    });
-    
-  </script>
+  <script src="clientRoom.js"></script>
 </body>
-
 </html>

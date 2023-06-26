@@ -34,20 +34,19 @@ socket.on('joined', ({ roomID, username }) => {
     sessionStorage.setItem('roomID', roomID);
     sessionStorage.setItem('username', username);
 
-    // Request channels map from server and await for channelsReponse message
-    socket.emit('getChannels', roomID);
+    // Request filter data map from server and await for filterDataResponse message
+    socket.emit('getFilterData', roomID);
 });
 
-socket.on('channelsResponse', (channels) => {
-    // save channels
-    sessionStorage.setItem('channels', channels);
-    console.log(`Recieved channels map: ${channels}`);
+socket.on('filterDataResponse', (filterData) => {
+    // save filter data
+    const data = JSON.parse(filterData);
+    console.log(data);
+    sessionStorage.setItem('channels', data.channels);
+    sessionStorage.setItem('usernames', data.usernames);
 
     // redirect to room page
     window.location.href = 'room.html';
-
-    console.log(`Joined Room: ${roomID}`);
-    console.log(`Username: ${username}`);
 });
 
 socket.on('error', (error) => {
