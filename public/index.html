@@ -13,14 +13,27 @@
     <div class="logo">
       <h1>Discordle</h1>
     </div>
-    <div class="login">
-      <input id="roomID" placeholder="Enter Room ID" value="balls"/>
-      <input id="username" placeholder="Enter Username" value="balls"/>
-      <button id="joinButton">Join Room</button>
+    <!-- Join Page -->
+    <div id="joinContainer">
+      <div class="login">
+        <input id="roomID" placeholder="Enter Room ID"/>
+        <input id="username" placeholder="Enter Username"/>
+        <button id="joinButton">Join Room</button>
+      </div>
+    </div>
+    <!-- Room Page -->
+    <div id="roomContainer" style="display: none;">
+      <div id="roomInfoDiv">
+          <p id="roomIDDisplay">Room ID: </p>
+          <p id="usernameDisplay">Username: </p>
+      </div>
+      <div class="form" id="channelFilter">
+          <button id="startButton">Start Game</button>
+      </div>
     </div>
   </div>
   <script src="https://cdn.socket.io/4.3.2/socket.io.min.js"></script>
-  <script src="node_modules/jquery/dist/jquery.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="client.js"></script>
 </body>
 

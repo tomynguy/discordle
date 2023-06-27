@@ -29,64 +29,73 @@ app.use(express.static('public'));
 
 app.use(express.json());
 
-function createRoom(file, recurse = 0) {
+async function createRoom(file, recurse = 0) {
     let room = 'room';
     for (let i = 0; i < 5 + recurse / 5; i++) room += Math.floor(Math.random() * 10);
     if (roomData.has(room)) room = createRoom(file, recurse + 1);
     else {
         // Valid room ID, so create and set up room
         roomList.set(room, new Set());
-        roomData.set(room, parseMessageData(file));
+        const messageData = await parseMessageData(file);
+        roomData.set(room, messageData);
         roomFilterData.set(room, getFilterData(room));
     }
     return room;
 }
 
 // given a CSV file name of the message data, parse it
-function parseMessageData(path) {
-    let results = [];
-
-    fs.createReadStream(`parsedMessages/${path}`)
-    .pipe(csv())
-    .on('data', (data) => {
-        // Process each row of data
-        results.push(data);
-    })
-    .on('end', () => {
-        // CSV parsing is complete, print results
-        console.log('Done.');
+async function parseMessageData(path) {
+    return new Promise((resolve, reject) => {
+      const results = [];
+  
+      fs.createReadStream(`parsedMessages/${path}`)
+        .pipe(csv())
+        .on('data', (data) => {
+          // Process each row of data
+          results.push(data);
+        })
+        .on('end', () => {
+          // CSV parsing is complete, resolve the promise with the results
+          console.log('CSV parsing completed.');
+          resolve(results);
+        })
+        .on('error', (error) => {
+          // Error occurred during CSV parsing, reject the promise
+          reject(error);
+        });
     });
-
-    return results;
-}
+  }
 
 function getFilterData(roomID) {
-    let result = new Map();
-
     let channels = new Map();
     let usernames = new Set();
     let data = roomData.get(roomID);
+
     for (let i = 0; i < data.length; i++) {
         const row = data[i];
 
         // add channel
-        if(!channels.has(row.channelID)) {
-            channels.set(row.channelID, row.channel);
-        }
+        channels.set(row.ChannelID, row.Channel);
         
         // add username
         const username = {
-            globalName: row.author.globalName,
-            displayName: row.author.displayName,
-            nickname: row.nickname
+            globalName: row.GlobalName,
+            displayName: row.DisplayName,
+            nickname: row.Nickname
         }
-        usernames.add(username);
+        
+        if(!usernames.has(username)) {
+            usernames.add(username);
+            console.log(username);
+        }
+
+        
     }
 
-    result.set("channels", channels);
-    result.set("usernames", usernames);
-
-    return result;
+    return {
+        'channels': channels,
+        'usernames' : usernames
+    };
 }
 
 io.on('connection', (socket) => {
@@ -99,7 +108,9 @@ io.on('connection', (socket) => {
         if (!roomList.has(roomID)) {
             socket.emit('error', 'Room not found');
         } else if (roomList.get(roomID).has(username)) {
-            socket.emit('error', 'Username Taken');
+            socket.emit('error', 'Username taken');
+        } else if (username === '') {
+            socket.emit('error', 'Invalid username');
         } else {
             socket.room = roomID;
             socket.username = username;

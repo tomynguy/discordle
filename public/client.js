@@ -1,28 +1,14 @@
-// client.js
-const joinButton = document.getElementById('joinButton');
-const roomIDInput = document.getElementById('roomID');
-const usernameInput = document.getElementById('username');
-const roomIDDisplay = document.getElementById('roomIDDisplay');
-const usernameDisplay = document.getElementById('usernameDisplay');
-const roomInfoDiv = document.getElementById('roomInfo');
-
-// Event listener for join button
-joinButton.addEventListener('click', () => {
-    const roomID = roomIDInput.value;
-    const username = usernameInput.value;
-
-    // Validate input
-    if (roomID === '' || username === '') {
-        alert('Please enter a valid Room ID and Username.');
-        return;
-    }
-
-    // Emit join event to the server
-    socket.emit('join', { roomID, username });
-});
-
 // Socket.io connection
 const socket = io();
+
+// Event listener for join button
+$('#joinButton').on('click', function() {
+    const roomID = $('#roomID').val();
+    const username = $('#username').val();
+    console.log(roomID);
+    // Emit join event to the server
+    socket.emit('join', { roomID, username });
+  });
 
 // Socket.io event listeners
 socket.on('connect', () => {
@@ -30,10 +16,6 @@ socket.on('connect', () => {
 });
 
 socket.on('joined', ({ roomID, username }) => {
-    // Save roomID and username
-    sessionStorage.setItem('roomID', roomID);
-    sessionStorage.setItem('username', username);
-
     // Request filter data map from server and await for filterDataResponse message
     socket.emit('getFilterData', roomID);
 });
@@ -41,12 +23,31 @@ socket.on('joined', ({ roomID, username }) => {
 socket.on('filterDataResponse', (filterData) => {
     // save filter data
     const data = JSON.parse(filterData);
-    console.log(data);
-    sessionStorage.setItem('channels', data.channels);
-    sessionStorage.setItem('usernames', data.usernames);
+    const channels = new Map(JSON.parse(data.channels));
+    const usernames = new Set(JSON.parse(data.usernames));
 
-    // redirect to room page
-    window.location.href = 'room.html';
+    // update room page contents
+    $('#roomIDDisplay').text(`Room ID: ${$('#roomID').val()}`);
+    $('#usernameDisplay').text(`Username: ${$('#username').val()}`);
+
+    // populate filter form with each channel
+    channels.forEach((channelName, channelID) => {
+        console.log('adding checkbox');
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.name = 'channel';
+        checkbox.value = channelID;
+    
+        const label = document.createElement('label');
+        label.textContent = channelName;
+        label.appendChild(checkbox);
+    
+        $('#channelFilter').before(label);
+    }); 
+    
+    // switch to room page
+    $('#joinContainer').hide();
+    $('#roomContainer').show();
 });
 
 socket.on('error', (error) => {
