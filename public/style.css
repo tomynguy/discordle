@@ -5,39 +5,45 @@ body {
     background-color: #36393f;
   }
   
-  .container {
+  div {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+  }
+
+  .container {
     height: 100vh;
     color: #fff;
   }
   
+  .logo {
+    background-color: #7289da;
+    width: 100vw;
+  }
+
   h1 {
-    font-size: 140px;
-    margin-bottom: 40px;
+    font-size: calc(3vh + 3vw);
+    margin: calc(.5vh + .5vw);
+  }
+
+  .login {
+    margin-top: calc(30vh);
   }
   
-  .form {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-bottom: 20px;
-  }
-  
-  input[type="text"] {
-    padding: 8px;
-    margin-bottom: 25px;
-    width: 600px;
+  input {
+    font-size: calc(1vh + 1vw);
+    padding: calc(.5vh + .5vw);
+    margin-bottom: 5vh;
+    width: 35vw;
     border: none;
     background-color: #202225;
     color: #fff;
-    border-radius: calc(.5vh + .5vw);
+    border-radius: calc(.3vh + .3vw);
   }
   
   button {
-    padding: 10px 20px;
+    font-size: calc(1vh + 1vw);
+    padding: calc(.5vh + .5vw);
     background-color: #7289da;
     color: #fff;
     border: none;
@@ -48,9 +54,3 @@ body {
   button:hover {
     background-color: #677bc4;
   }
-  
-  #roomInfo {
-    font-size: 48px;
-    text-align: center;
-  }
-  
