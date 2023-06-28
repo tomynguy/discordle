@@ -117,36 +117,48 @@ io.on('connection', (socket) => {
         }
     });
 
-        // Updates rooms upon client disconnection
-        socket.on('disconnect', () => {
-            console.log('Client Disconnected');
-            let room = roomList.get(socket.room);
-            if (room) {
-                room.delete(socket.username);
+    // Updates rooms upon client disconnection
+    socket.on('disconnect', () => {
+        console.log('Client Disconnected');
+        let room = roomList.get(socket.room);
+        if (room) {
+            room.delete(socket.username);
+        }
+    });
+    
+    // Event listener for getFilterData event
+    // returns: a Map of all filter data (channels, usernames) associated with this room
+    socket.on('getFilterData', (roomID) => {
+        roomID = roomID.toLowerCase();
+        if (roomFilterData.has(roomID)) {
+            const serializedData = {
+                "channels": JSON.stringify(Array.from(roomFilterData.get(roomID).channels)),
+                "usernames": JSON.stringify(Array.from(roomFilterData.get(roomID).usernames))
             }
-        });
-        
-        // Event listener for getFilterData event
-        // returns: a Map of all filter data (channels, usernames) associated with this room
-        socket.on('getFilterData', (roomID) => {
-            roomID = roomID.toLowerCase();
-            if (roomFilterData.has(roomID)) {
-                const serializedData = {
-                    "channels": JSON.stringify(Array.from(roomFilterData.get(roomID).channels)),
-                    "usernames": JSON.stringify(Array.from(roomFilterData.get(roomID).usernames))
-                }
 
-                socket.emit('filterDataResponse', JSON.stringify(serializedData));
-            }
-            else {
-                socket.emit('error', 'Filter data for room not found');
-            }
-        });
+            socket.emit('filterDataResponse', JSON.stringify(serializedData));
+        }
+        else {
+            socket.emit('error', 'Filter data for room not found');
+        }
+    });
 
-        // Get attributes
-        socket.on('balls', () => {
-            console.log(socket.username, socket.room);
-        });
+    socket.on('setupGame', (roomID, settings) => {
+        const data = JSON.parse(settings);
+        const selectedChannels = new Set(JSON.parse(data.channels));
+        const selectedUsers = new Set(JSON.parse(data.usernames));
+
+        console.log(selectedChannels);
+        console.log(selectedUsers);
+
+        // TO-DO: send back 'startGame' message to all user sockets somehow
+        // which will triggers game page html
+    });
+
+    // Get attributes
+    socket.on('balls', () => {
+        console.log(socket.username, socket.room);
+    });
 });
 
 server.listen(PORT, () => {

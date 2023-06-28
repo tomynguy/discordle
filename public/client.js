@@ -1,10 +1,13 @@
 // Socket.io connection
 const socket = io();
 
+let roomID = -1;
+let username = "none";
+
 // Event listener for join button
 $('#joinButton').on('click', function() {
-    const roomID = $('#roomID').val();
-    const username = $('#username').val();
+    roomID = $('#roomID').val();
+    username = $('#username').val();
     console.log(roomID);
     // Emit join event to the server
     socket.emit('join', { roomID, username });
@@ -28,7 +31,7 @@ socket.on('filterDataResponse', (filterData) => {
     const usernames = new Map(JSON.parse(data.usernames));
     console.log(usernames);
     // update room page contents
-    $('#roomInfoDisplay').text(`Room ID: ${$('#roomID').val()}, Username: ${$('#username').val()}`);
+    $('#roomInfoDisplay').text(`Room ID: ${roomID}, Username: ${username}`);
 
     // populate channel filter form with each channel
     channels.forEach((channelName, channelID) => {
@@ -42,14 +45,14 @@ socket.on('filterDataResponse', (filterData) => {
         label.appendChild(checkbox);
       
         $('#channelFilter').append(label);
-      });
+    });
 
     // populate channel filter form with each channel
     usernames.forEach(({displayName, nickname}, globalName) => {
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.name = 'username';
-        checkbox.value = {globalName: globalName, displayName: displayName, nickname: nickname};
+        checkbox.value = globalName;
     
         const label = document.createElement('label');
         label.textContent = globalName;
@@ -67,3 +70,34 @@ socket.on('error', (error) => {
     console.error('Socket error:', error);
     alert('Error: ' + error);
 });
+
+// Event listener for start button
+$('#startButton').on('click', function() {
+    // Create sets for selected channels and users
+    let selectedChannels = new Set();
+    let selectedUsers = new Set();
+  
+    // Iterate over checkboxes in the channel filter
+    $('#channelFilter input[type="checkbox"]').each(function() {
+      if ($(this).is(':checked')) {
+        selectedChannels.add($(this).val());
+      }
+    });
+  
+    // Iterate over checkboxes in the user filter
+    $('#userFilter input[type="checkbox"]').each(function() {
+      if ($(this).is(':checked')) {
+        selectedUsers.add($(this).val());
+      }
+    });
+  
+    console.log('Selected channels:', selectedChannels);
+    console.log('Selected users:', selectedUsers);
+
+    const serializedData = {
+        channels: JSON.stringify(selectedChannels), 
+        usernames: JSON.stringify(selectedUsers)
+    };
+
+    socket.emit('setupGame', roomID, JSON.stringify(serializedData));
+  });
