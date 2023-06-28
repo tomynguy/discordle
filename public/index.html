@@ -16,25 +16,31 @@
     <!-- Join Page -->
     <div id="joinContainer">
       <div class="login">
-        <input id="roomID" placeholder="Enter Room ID"/>
-        <input id="username" placeholder="Enter Username"/>
+        <input class="inputBox" id="roomID" placeholder="Enter Room ID"/>
+        <input class="inputBox" id="username" placeholder="Enter Username"/>
         <button id="joinButton">Join Room</button>
       </div>
     </div>
     <!-- Room Page -->
-    <div id="roomContainer" style="display: none;">
+    <div id="roomContainer">
       <div id="roomInfoDiv">
         <p id="roomInfoDisplay"></p>
       </div>
       <div id="settingsPanel">
         <p>Select which channels to include:</p>
-        <div id="channelFilter">
+        <div class="filter" id="channelFilter">
+          <div class="column" id="col0"></div>
+          <div class="column" id="col1"></div>
+          <div class="column" id="col2"></div>
         </div>
         <p>Select which users to include:</p>
-        <div id="userFilter">
+        <div class="filter" id="userFilter">
+          <div class="column" id="col3"></div>
+          <div class="column" id="col4"></div>
+          <div class="column" id="col5"></div>
         </div>
-        <button id="startButton">Start Game</button>
       </div>
+      <button id="startButton">Start Game</button>
     </div>
   </div>
   <script src="https://cdn.socket.io/4.3.2/socket.io.min.js"></script>

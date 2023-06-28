@@ -38,8 +38,8 @@ client.on('messageCreate', async (message) => {
             fetchedMessages.forEach((msg) => {
                 if (!msg.author.bot && msg.content.length > 0) {
                     const author = {
-                        globalName: msg.member ? msg.member.user.tag : '',
-                        displayName: msg.author.username,
+                        globalName: msg.author.username,
+                        displayName: msg.member ? msg.member.user : '',
                         nickname: msg.member ? msg.member.nickname : ''
                     };
                     let attachments = msg.attachments.map((attachment) => attachment.url);
@@ -78,7 +78,7 @@ client.on('messageCreate', async (message) => {
             await csvWriterInstance.writeRecords(messagesData);
             console.log(`Messages fetched and saved to ${message.guild.id}.csv`);
             const roomID = await createRoom(`${message.guild.id}.csv`);
-            message.reply(`${roomID} has been created.`);
+            message.reply(`Link: http://localhost:3000/?room=${roomID}`);
           } catch (err) {
             console.error('Error writing to CSV file:', err);
             message.reply('An error occurred while retrieving the messages.');

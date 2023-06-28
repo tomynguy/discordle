@@ -30,7 +30,7 @@ body {
     margin-top: calc(30vh);
   }
   
-  input {
+  .inputBox {
     font-size: calc(1vh + 1vw);
     padding: calc(.5vh + .5vw);
     margin-bottom: 5vh;
@@ -53,4 +53,29 @@ body {
   
   button:hover {
     background-color: #677bc4;
+  }
+
+  #roomContainer {
+    display: none;
+  }
+
+  #settingsPanel {
+    background-color: #282b30;
+    padding: calc(.5vh + .5vw);
+    margin: calc(.5vh + .5vw);
+  }
+
+  .filter {
+    display: table;
+    width: 60vw;
+  }
+
+  .column {
+    float: left;
+    width: 33.33%;
+  }
+
+  .entryContainer {
+    width: 100%;
+    flex-direction: row;
   }

@@ -16,6 +16,13 @@ $('#joinButton').on('click', function() {
 // Socket.io event listeners
 socket.on('connect', () => {
     console.log('Connected to server');
+    const urlParams = new URLSearchParams(window.location.search);
+    const room = urlParams.get('room');
+    const name = urlParams.get('name');
+    if (room) 
+      $('#roomID').val(room);
+    if (name)
+      $('#username').val(name);
 });
 
 socket.on('joined', ({ roomID, username }) => {
@@ -31,34 +38,16 @@ socket.on('filterDataResponse', (filterData) => {
     const usernames = new Map(JSON.parse(data.usernames));
     console.log(usernames);
     // update room page contents
+    let i = 0;
     $('#roomInfoDisplay').text(`Room ID: ${roomID}, Username: ${username}`);
-
     // populate channel filter form with each channel
     channels.forEach((channelName, channelID) => {
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.name = 'channel';
-        checkbox.value = channelID;
-      
-        const label = document.createElement('label');
-        label.textContent = channelName;
-        label.appendChild(checkbox);
-      
-        $('#channelFilter').append(label);
+        populateEntries('channel', channelID, channelName, `#col${i++%3}`);
     });
 
     // populate channel filter form with each channel
     usernames.forEach(({displayName, nickname}, globalName) => {
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.name = 'username';
-        checkbox.value = globalName;
-    
-        const label = document.createElement('label');
-        label.textContent = globalName;
-        label.appendChild(checkbox);
-    
-        $('#userFilter').append(label);
+        populateEntries('username', globalName, globalName, `#col${i++%3+3}`);
     }); 
     
     // switch to room page
@@ -101,3 +90,26 @@ $('#startButton').on('click', function() {
 
     socket.emit('setupGame', roomID, JSON.stringify(serializedData));
   });
+
+  function populateEntries(checkboxName, checkboxVal, labelText, parent) {
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.name = checkboxName;
+    checkbox.value = entrySplice(checkboxVal);
+    checkbox.checked = true;
+
+    const label = document.createElement('label');
+    label.textContent = entrySplice(labelText);
+
+    const container = document.createElement('div');
+    container.className = "entryContainer";
+    container.append(checkbox,label);
+
+    $(parent).append(container);
+  }
+
+  function entrySplice(entry) {
+    if (entry.length > 33)
+      return `${entry.substring(0,30)}...`;
+    return entry;
+  }
