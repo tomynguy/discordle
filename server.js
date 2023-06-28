@@ -68,7 +68,7 @@ async function parseMessageData(path) {
 
 function getFilterData(roomID) {
     let channels = new Map();
-    let usernames = new Set();
+    let usernames = new Map();
     let data = roomData.get(roomID);
 
     for (let i = 0; i < data.length; i++) {
@@ -78,15 +78,14 @@ function getFilterData(roomID) {
         channels.set(row.ChannelID, row.Channel);
         
         // add username
-        const username = {
-            globalName: row.GlobalName,
+        const alternateNames = {
             displayName: row.DisplayName,
             nickname: row.Nickname
         }
         
-        if(!usernames.has(username)) {
-            usernames.add(username);
-            console.log(username);
+        if(!usernames.has(row.GlobalName)) {
+            usernames.set(row.GlobalName, alternateNames);
+            console.log(`${row.GlobalName}: ${alternateNames}`);
         }
 
         

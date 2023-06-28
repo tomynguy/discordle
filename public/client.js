@@ -24,25 +24,38 @@ socket.on('filterDataResponse', (filterData) => {
     // save filter data
     const data = JSON.parse(filterData);
     const channels = new Map(JSON.parse(data.channels));
-    const usernames = new Set(JSON.parse(data.usernames));
-
+    console.log(channels);
+    const usernames = new Map(JSON.parse(data.usernames));
+    console.log(usernames);
     // update room page contents
-    $('#roomIDDisplay').text(`Room ID: ${$('#roomID').val()}`);
-    $('#usernameDisplay').text(`Username: ${$('#username').val()}`);
+    $('#roomInfoDisplay').text(`Room ID: ${$('#roomID').val()}, Username: ${$('#username').val()}`);
 
-    // populate filter form with each channel
+    // populate channel filter form with each channel
     channels.forEach((channelName, channelID) => {
-        console.log('adding checkbox');
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.name = 'channel';
         checkbox.value = channelID;
-    
+      
         const label = document.createElement('label');
         label.textContent = channelName;
         label.appendChild(checkbox);
+      
+        $('#channelFilter').append(label);
+      });
+
+    // populate channel filter form with each channel
+    usernames.forEach(({displayName, nickname}, globalName) => {
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.name = 'username';
+        checkbox.value = {globalName: globalName, displayName: displayName, nickname: nickname};
     
-        $('#channelFilter').before(label);
+        const label = document.createElement('label');
+        label.textContent = globalName;
+        label.appendChild(checkbox);
+    
+        $('#userFilter').append(label);
     }); 
     
     // switch to room page

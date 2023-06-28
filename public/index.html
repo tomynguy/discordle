@@ -24,12 +24,17 @@
     <!-- Room Page -->
     <div id="roomContainer" style="display: none;">
       <div id="roomInfoDiv">
-          <p id="roomIDDisplay">Room ID: </p>
-          <p id="usernameDisplay">Username: </p>
+        <p id="roomInfoDisplay"></p>
       </div>
-      <div class="form" id="channelFilter">
-          <button id="startButton">Start Game</button>
-      </div>
+      <form id="settingsPanel">
+        <p>Select which channels to include:</p>
+        <div id="channelFilter">
+        </div>
+        <p>Select which users to include:</p>
+        <div id="userFilter">
+        </div>
+        <button id="startButton">Start Game</button>
+      </form>
     </div>
   </div>
   <script src="https://cdn.socket.io/4.3.2/socket.io.min.js"></script>
