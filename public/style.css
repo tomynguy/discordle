@@ -79,4 +79,15 @@ body {
     display: inline-block;  
     width: 100%;
     word-break: break-all;
-  }   
+  }
+
+  #gameContainer {
+    display: none;
+  }
+
+  .messageDisplay {
+    height: 10vh;
+    width: fit-content;
+    border: #282b30;
+    border: 5px;
+  }

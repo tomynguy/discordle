@@ -114,6 +114,7 @@ io.on('connection', (socket) => {
         } else {
             socket.room = roomID;
             socket.username = username;
+            socket.join(roomID);
             socket.emit('joined', { roomID, username });
         }
     });
@@ -123,6 +124,7 @@ io.on('connection', (socket) => {
         console.log('Client Disconnected');
         let room = roomList.get(socket.room);
         if (room) {
+            socket.leave(socket.room);
             room.delete(socket.username);
         }
     });
@@ -144,6 +146,9 @@ io.on('connection', (socket) => {
         }
     });
 
+    // Event listener for setupGame event
+    // this event is triggered when client presses start game and sends their selected settings
+    // returns: a start game message along with a random message fitting criteria
     socket.on('setupGame', (roomID, settings) => {
         const data = JSON.parse(settings);
         const selectedChannels = new Set(JSON.parse(data.channels));
@@ -151,8 +156,18 @@ io.on('connection', (socket) => {
 
         console.log(`Server recieved settings from ${roomID}`);
 
-        // TO-DO: send back 'startGame' message to all user sockets somehow
-        // which will triggers game page html
+        // select random message that fits these filters
+        const messages = roomData.get(roomID);
+        let randomMessage;
+        do {
+            randomMessage = messages[Math.floor(Math.random() * messages.length)];
+        }
+        while (!selectedChannels.has(randomMessage.ChannelID) || !selectedUsers.has(randomMessage.GlobalName));
+
+        console.log(randomMessage);
+
+        // send startGame message to all users
+        io.to(roomID).emit('startGame', randomMessage.Message);
     });
 
     // Get attributes

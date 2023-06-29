@@ -55,6 +55,16 @@ socket.on('filterDataResponse', (filterData) => {
     $('#roomContainer').show();
 });
 
+socket.on('startGame', (messageText) => {
+    $('#messageText').text(messageText);
+
+    console.log("GAME!");
+
+    // switch to game page
+    $('#roomContainer').hide();
+    $('#gameContainer').show();
+});
+
 socket.on('error', (error) => {
     console.error('Socket error:', error);
     alert('Error: ' + error);
