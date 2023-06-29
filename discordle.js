@@ -1,9 +1,10 @@
 const { Client, GatewayIntentBits, ChannelType, CHANNEL_TYPES, PermissionsBitField } = require('discord.js');
 
+const http = require('http');
 const fs = require('fs');
 const csvWriter = require('csv-writer').createObjectCsvWriter;
 
-let {createRoom} = require('./server.js');
+let {createRoom, PORT} = require('./server.js');
 
 const client = new Client({
 	intents: [
@@ -44,8 +45,6 @@ client.on('messageCreate', async (message) => {
                     };
                     let attachments = msg.attachments.map((attachment) => attachment.url);
                     messagesData.push({
-                        guild: message.guild.name,
-                        guildID: message.guild.id,
                         channel: channel.name,
                         channelID: channel.id,
                         globalName: author.globalName,
@@ -62,8 +61,6 @@ client.on('messageCreate', async (message) => {
         const csvWriterInstance = csvWriter({
             path: `parsedMessages/${message.guild.id}.csv`,
             header: [
-                { id: 'guild', title: 'Guild' },
-                { id: 'guildID', title: 'GuildID' },
                 { id: 'channel', title: 'Channel' },
                 { id: 'channelID', title: 'ChannelID' },
                 { id: 'globalName', title: 'GlobalName' },
@@ -77,18 +74,30 @@ client.on('messageCreate', async (message) => {
         try {
             await csvWriterInstance.writeRecords(messagesData);
             console.log(`Messages fetched and saved to ${message.guild.id}.csv`);
-            const roomID = await createRoom(`${message.guild.id}.csv`);
-            message.reply(`Link: http://localhost:3000/?room=${roomID}`);
+            replyLink(message, await createRoom(`${message.guild.id}.csv`));
           } catch (err) {
             console.error('Error writing to CSV file:', err);
             message.reply('An error occurred while retrieving the messages.');
             }
     }
 
+    if (message.content.startsWith('!create')) {
+        const filePath = `parsedMessages/${message.guild.id}.csv`;
+      
+        fs.promises.access(filePath, fs.constants.F_OK)
+          .then(() => createRoom(`${message.guild.id}.csv`))
+          .then((roomID) => replyLink(message, roomID))
+          .catch(() => message.reply('You need to use !fetch first.'));
+      }
 });
-  
 
-
+function replyLink(message, roomID) {
+    http.get('http://api.ipify.org/?format=json', (res) => {
+        let data = '';
+        res.on('data', (chunk) => (data += chunk));
+        res.on('end', () => message.reply(`Link: http://${JSON.parse(data).ip}:${PORT}/?room=${roomID}`));
+    }).on('error', (error) => console.error('Error:', error));
+  }
 
 let token = fs.readFileSync('token.txt', 'utf8');
 client.login(token);

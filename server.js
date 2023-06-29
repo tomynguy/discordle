@@ -22,7 +22,8 @@ let roomFilterData = new Map([
 ]);
 
 module.exports = {
-    createRoom: createRoom
+    createRoom: createRoom,
+    PORT: PORT
 };
 
 app.use(express.static('public'));
