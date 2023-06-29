@@ -149,8 +149,7 @@ io.on('connection', (socket) => {
         const selectedChannels = new Set(JSON.parse(data.channels));
         const selectedUsers = new Set(JSON.parse(data.usernames));
 
-        console.log(selectedChannels);
-        console.log(selectedUsers);
+        console.log(`Server recieved settings from ${roomID}`);
 
         // TO-DO: send back 'startGame' message to all user sockets somehow
         // which will triggers game page html

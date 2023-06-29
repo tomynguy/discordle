@@ -76,6 +76,7 @@ body {
   }
 
   .entryContainer {
+    display: inline-block;  
     width: 100%;
-    flex-direction: row;
-  }
+    word-break: break-all;
+  }   

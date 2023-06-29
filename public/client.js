@@ -67,49 +67,36 @@ $('#startButton').on('click', function() {
     let selectedUsers = new Set();
   
     // Iterate over checkboxes in the channel filter
-    $('#channelFilter input[type="checkbox"]').each(function() {
-      if ($(this).is(':checked')) {
-        selectedChannels.add($(this).val());
-      }
+    $('#channelFilter .column').each(function() {
+      $(this).find('input[type="checkbox"]').each(function() {
+        if ($(this).is(':checked')) {
+          selectedChannels.add($(this).val());
+        }
+      });
     });
-  
+
     // Iterate over checkboxes in the user filter
-    $('#userFilter input[type="checkbox"]').each(function() {
-      if ($(this).is(':checked')) {
-        selectedUsers.add($(this).val());
-      }
+    $('#userFilter .column').each(function() {
+      $(this).find('input[type="checkbox"]').each(function() {
+        if ($(this).is(':checked')) {
+          selectedUsers.add($(this).val());
+        }
+      });
     });
-  
-    console.log('Selected channels:', selectedChannels);
-    console.log('Selected users:', selectedUsers);
 
     const serializedData = {
-        channels: JSON.stringify(selectedChannels), 
-        usernames: JSON.stringify(selectedUsers)
+        channels: JSON.stringify([...selectedChannels]), 
+        usernames: JSON.stringify([...selectedUsers])
     };
 
     socket.emit('setupGame', roomID, JSON.stringify(serializedData));
   });
 
-  function populateEntries(checkboxName, checkboxVal, labelText, parent) {
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.name = checkboxName;
-    checkbox.value = entrySplice(checkboxVal);
-    checkbox.checked = true;
-
-    const label = document.createElement('label');
-    label.textContent = entrySplice(labelText);
-
-    const container = document.createElement('div');
-    container.className = "entryContainer";
-    container.append(checkbox,label);
-
-    $(parent).append(container);
-  }
-
-  function entrySplice(entry) {
-    if (entry.length > 33)
-      return `${entry.substring(0,30)}...`;
-    return entry;
+  function populateEntries(name, val, text, parent) {
+    const entry = $("<div>", {
+      class: "entryContainer",
+      html: `<input type="checkbox" name="${name}" value="${val}" checked>${text}`
+    });
+    
+    $(parent).append(entry);
   }
