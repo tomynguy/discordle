@@ -9,7 +9,7 @@ const csv = require('csv-parser');
 
 const PORT = 3000;
 let roomList = new Map([['balls', new Set()]]);
-let roomData = new Map([['balls', undefined]]);
+let roomData = new Map([['balls', undefined]]); // map from room -> parsed message data
 // map from room -> map about components of the parsed data (i.e. channels names/ids, usernames), keys: "channels", "users"
 let roomFilterData = new Map([
     ['balls', 
@@ -21,7 +21,7 @@ let roomFilterData = new Map([
     }]
 ]);
 
-let roomAnswers = new Map(); // map from room -> message the room is currently on
+let gameData = new Map(); // map from room -> {message the room is currently on, number of rounds left}
 
 module.exports = {
     createRoom: createRoom,
@@ -133,8 +133,8 @@ io.on('connection', (socket) => {
     
     // Event listener for getFilterData event
     // returns: a Map of all filter data (channels, usernames) associated with this room
-    socket.on('getFilterData', (roomID) => {
-        roomID = roomID.toLowerCase();
+    socket.on('getFilterData', () => {
+        roomID = socket.roomID.toLowerCase();
         if (roomFilterData.has(roomID)) {
             const serializedData = {
                 "channels": JSON.stringify(Array.from(roomFilterData.get(roomID).channels)),
@@ -167,32 +167,53 @@ io.on('connection', (socket) => {
             randomMessage = messages[Math.floor(Math.random() * messages.length)];
         }
         while (!selectedChannels.has(randomMessage.ChannelID) || !selectedUsers.has(randomMessage.GlobalName));
+        
+        let newGame = {
+            message: randomMessage,
+            roundsLeft: data.numRounds
+        }
 
-        roomAnswers.set(socket.roomID, randomMessage);
+        gameData.set(socket.roomID, newGame);
 
         // send startGame message to all users
         io.to(socket.roomID).emit('startGame', randomMessage.Message);
     });
 
     socket.on('guessAnswer', (guess) => {
-        if(guess.toLowerCase() != roomAnswers.get(socket.roomID).GlobalName.toLowerCase() && guess.toLowerCase() != "balls") {
+        if(guess.toLowerCase() != gameData.get(socket.roomID).message.GlobalName.toLowerCase() && guess.toLowerCase() != "balls") {
             console.log(`${socket.username}'s guess was wrong!`);
             return;
         }
 
-        console.log(`Answer was: ${roomAnswers.get(socket.roomID).GlobalName}`);
+        console.log(`Answer was: ${gameData.get(socket.roomID).message.GlobalName}`);
 
-        // round finished, start the next round
-        let randomMessage;
-        do {
-            randomMessage = messages[Math.floor(Math.random() * messages.length)];
+        // round finished
+
+        if(gameData.get(socket.roomID).roundsLeft == 1) {
+            // last round, so send players back to room page
+            console.log("Game end!");
+            io.to(socket.roomID).emit('gameEnd');
         }
-        while (!selectedChannels.has(randomMessage.ChannelID) || !selectedUsers.has(randomMessage.GlobalName));
+        else {
+            // start next round
+            let randomMessage;
+            do {
+                randomMessage = messages[Math.floor(Math.random() * messages.length)];
+            }
+            while (!selectedChannels.has(randomMessage.ChannelID) || !selectedUsers.has(randomMessage.GlobalName));
+            
+            let newGame = {
+                message: randomMessage,
+                roundsLeft: gameData.get(socket.roomID).roundsLeft - 1
+            }
 
-        roomAnswers.set(socket.roomID, randomMessage);
+            gameData.set(socket.roomID, newGame);
 
-        // send startGame message to all users
-        io.to(socket.roomID).emit('startGame', randomMessage.Message);
+            // send startGame message to all users
+            io.to(socket.roomID).emit('startGame', randomMessage.Message);
+        }
+        
+        
     });
 
     // Get attributes

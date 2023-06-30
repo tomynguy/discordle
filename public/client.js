@@ -27,7 +27,7 @@ socket.on('connect', () => {
 
 socket.on('joined', ({ roomID, username }) => {
     // Request filter data map from server and await for filterDataResponse message
-    socket.emit('getFilterData', roomID);
+    socket.emit('getFilterData');
 });
 
 socket.on('filterDataResponse', (filterData) => {
@@ -64,6 +64,12 @@ socket.on('startGame', (messageText) => {
     $('#gameContainer').show();
 });
 
+socket.on('gameEnd', () => {
+    // switch to room page
+    $('#gameContainer').hide();
+    $('#roomContainer').show();
+});
+
 socket.on('error', (error) => {
     console.error('Socket error:', error);
     alert('Error: ' + error);
@@ -91,7 +97,8 @@ $('#startButton').on('click', function() {
 
     const serializedData = {
         channels: JSON.stringify([...selectedChannels]), 
-        usernames: JSON.stringify([...selectedUsers])
+        usernames: JSON.stringify([...selectedUsers]),
+        numRounds: Math.max($('#numRoundsInput').val(), 1)
     };
 
     socket.emit('setupGame', JSON.stringify(serializedData));
