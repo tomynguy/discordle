@@ -1,7 +1,7 @@
 // Socket.io connection
 const socket = io();
 
-let roomID = -1;
+let roomID = "none";
 let username = "none";
 
 // Event listener for join button
@@ -94,7 +94,15 @@ $('#startButton').on('click', function() {
         usernames: JSON.stringify([...selectedUsers])
     };
 
-    socket.emit('setupGame', roomID, JSON.stringify(serializedData));
+    socket.emit('setupGame', JSON.stringify(serializedData));
+  });
+
+  // Event listener for answer button
+  $('#answerButton').on('click', function() {
+    socket.emit('guessAnswer', $("#answer").val());
+    console.log(`Submitting answer: ${$("#answer").val()}`);
+    $("#answer").val('');
+    return false;
   });
 
   function populateEntries(name, val, text, parent) {

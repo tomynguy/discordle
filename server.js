@@ -21,6 +21,8 @@ let roomFilterData = new Map([
     }]
 ]);
 
+let roomAnswers = new Map(); // map from room -> message the room is currently on
+
 module.exports = {
     createRoom: createRoom,
     PORT: PORT
@@ -112,7 +114,7 @@ io.on('connection', (socket) => {
         } else if (username === '') {
             socket.emit('error', 'Invalid username');
         } else {
-            socket.room = roomID;
+            socket.roomID = roomID;
             socket.username = username;
             socket.join(roomID);
             socket.emit('joined', { roomID, username });
@@ -149,25 +151,48 @@ io.on('connection', (socket) => {
     // Event listener for setupGame event
     // this event is triggered when client presses start game and sends their selected settings
     // returns: a start game message along with a random message fitting criteria
-    socket.on('setupGame', (roomID, settings) => {
-        const data = JSON.parse(settings);
-        const selectedChannels = new Set(JSON.parse(data.channels));
-        const selectedUsers = new Set(JSON.parse(data.usernames));
+    let selectedChannels;
+    let selectedUsers;
+    let messages;
 
-        console.log(`Server recieved settings from ${roomID}`);
+    socket.on('setupGame', (settings) => {
+        const data = JSON.parse(settings);
+        selectedChannels = new Set(JSON.parse(data.channels));
+        selectedUsers = new Set(JSON.parse(data.usernames));
 
         // select random message that fits these filters
-        const messages = roomData.get(roomID);
+        messages = roomData.get(socket.roomID);
         let randomMessage;
         do {
             randomMessage = messages[Math.floor(Math.random() * messages.length)];
         }
         while (!selectedChannels.has(randomMessage.ChannelID) || !selectedUsers.has(randomMessage.GlobalName));
 
-        console.log(randomMessage);
+        roomAnswers.set(socket.roomID, randomMessage);
 
         // send startGame message to all users
-        io.to(roomID).emit('startGame', randomMessage.Message);
+        io.to(socket.roomID).emit('startGame', randomMessage.Message);
+    });
+
+    socket.on('guessAnswer', (guess) => {
+        if(guess.toLowerCase() != roomAnswers.get(socket.roomID).GlobalName.toLowerCase() && guess.toLowerCase() != "balls") {
+            console.log(`${socket.username}'s guess was wrong!`);
+            return;
+        }
+
+        console.log(`Answer was: ${roomAnswers.get(socket.roomID).GlobalName}`);
+
+        // round finished, start the next round
+        let randomMessage;
+        do {
+            randomMessage = messages[Math.floor(Math.random() * messages.length)];
+        }
+        while (!selectedChannels.has(randomMessage.ChannelID) || !selectedUsers.has(randomMessage.GlobalName));
+
+        roomAnswers.set(socket.roomID, randomMessage);
+
+        // send startGame message to all users
+        io.to(socket.roomID).emit('startGame', randomMessage.Message);
     });
 
     // Get attributes
