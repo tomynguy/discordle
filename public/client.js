@@ -25,8 +25,9 @@ socket.on('connect', () => {
     $('#username').val(name);
 });
 
-socket.on('joined', ({ roomID, username }) => {
+socket.on('joined', (isHost) => {
   // Request filter data map from server and await for filterDataResponse message
+  console.log(`isHost: ${isHost}`);
   socket.emit('getFilterData');
 });
 

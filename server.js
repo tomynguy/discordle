@@ -9,7 +9,7 @@ const csv = require('csv-parser');
 
 const PORT = 3000;
 let roomList = new Map([['balls', new Set()]]);
-let roomData = new Map([['balls', undefined]]); // map from room -> parsed message data
+let roomMessageData = new Map([['balls', undefined]]); // map from room -> parsed message data
 // map from room -> map about components of the parsed data (i.e. channels names/ids, usernames), keys: "channels", "users"
 let roomFilterData = new Map([
     ['balls', 
@@ -21,7 +21,7 @@ let roomFilterData = new Map([
     }]
 ]);
 
-let gameData = new Map(); // map from room -> {message the room is currently on, number of rounds left}
+let roomData = new Map(); // map from room -> {components of room (message, roundsLeft, inGame)}
 
 module.exports = {
     createRoom: createRoom,
@@ -35,13 +35,18 @@ app.use(express.json());
 async function createRoom(file, recurse = 0) {
     let room = 'room';
     for (let i = 0; i < 5 + recurse / 5; i++) room += Math.floor(Math.random() * 10);
-    if (roomData.has(room)) room = createRoom(file, recurse + 1);
+    if (roomMessageData.has(room)) room = createRoom(file, recurse + 1);
     else {
         // Valid room ID, so create and set up room
         roomList.set(room, new Set());
         const messageData = await parseMessageData(file);
-        roomData.set(room, messageData);
+        roomMessageData.set(room, messageData);
         roomFilterData.set(room, getFilterData(room));
+        roomData.set(room, {
+            message: null,
+            roundsLeft: 1,
+            inGame: false
+        });
     }
     return room;
 }
@@ -72,7 +77,7 @@ async function parseMessageData(path) {
 function getFilterData(roomID) {
     let channels = new Map();
     let usernames = new Map();
-    let data = roomData.get(roomID);
+    let data = roomMessageData.get(roomID);
 
     for (let i = 0; i < data.length; i++) {
         const row = data[i];
@@ -117,17 +122,43 @@ io.on('connection', (socket) => {
             socket.roomID = roomID;
             socket.username = username;
             socket.join(roomID);
-            socket.emit('joined', { roomID, username });
+            roomList.get(roomID).add(username);
+
+            // if there's not a host yet, make them new host
+            
+
+            if(roomList.get(roomID).size == 1) {
+                socket.isHost = true;
+            }
+            else {
+                socket.isHost = false;
+            }
+
+            socket.emit('joined', socket.isHost);
         }
     });
 
     // Updates rooms upon client disconnection
     socket.on('disconnect', () => {
         console.log('Client Disconnected');
-        let room = roomList.get(socket.room);
+        let room = roomList.get(socket.roomID);
         if (room) {
-            socket.leave(socket.room);
+            socket.leave(socket.roomID);
             room.delete(socket.username);
+            roomList.get(roomID).delete(socket.username);
+
+            if(socket.isHost) {
+                // assign a new host
+                const socketRoom = io.sockets.adapter.rooms.get(socket.roomID);
+                if(socketRoom != null && socketRoom.size > 0) {
+                    for(const socketID of socketRoom) {
+                        const socketInRoom = io.sockets.sockets.get(socketID);
+
+                        socketInRoom.isHost = true;
+                        break;
+                    }
+                }
+            }
         }
     });
     
@@ -156,42 +187,46 @@ io.on('connection', (socket) => {
     let messages;
 
     socket.on('setupGame', (settings) => {
+        // ignore non-host requests
+        if(!socket.isHost) {
+            socket.emit('error', 'Only the host can start the game');
+            return;
+        }
+
         const data = JSON.parse(settings);
         selectedChannels = new Set(JSON.parse(data.channels));
         selectedUsers = new Set(JSON.parse(data.usernames));
 
         // select random message that fits these filters
-        messages = roomData.get(socket.roomID);
+        messages = roomMessageData.get(socket.roomID);
         let randomMessage;
         do {
             randomMessage = messages[Math.floor(Math.random() * messages.length)];
         }
         while (!selectedChannels.has(randomMessage.ChannelID) || !selectedUsers.has(randomMessage.GlobalName));
-        
-        let newGame = {
-            message: randomMessage,
-            roundsLeft: data.numRounds
-        }
 
-        gameData.set(socket.roomID, newGame);
+        roomData.get(socket.roomID).message = randomMessage;
+        roomData.get(socket.roomID).roundsLeft = data.numRounds;
+        roomData.get(socket.roomID).inGame = true;
 
         // send startGame message to all users
         io.to(socket.roomID).emit('startGame', randomMessage.Message);
     });
 
     socket.on('guessAnswer', (guess) => {
-        if(guess.toLowerCase() != gameData.get(socket.roomID).message.GlobalName.toLowerCase() && guess.toLowerCase() != "balls") {
+        if(guess.toLowerCase() != roomData.get(socket.roomID).message.GlobalName.toLowerCase() && guess.toLowerCase() != "balls") {
             console.log(`${socket.username}'s guess was wrong!`);
             return;
         }
 
-        console.log(`Answer was: ${gameData.get(socket.roomID).message.GlobalName}`);
+        console.log(`Answer was: ${roomData.get(socket.roomID).message.GlobalName}`);
 
         // round finished
 
-        if(gameData.get(socket.roomID).roundsLeft == 1) {
+        if(roomData.get(socket.roomID).roundsLeft == 1) {
             // last round, so send players back to room page
             console.log("Game end!");
+            roomData.get(socket.roomID).inGame = false;
             io.to(socket.roomID).emit('gameEnd');
         }
         else {
@@ -201,13 +236,9 @@ io.on('connection', (socket) => {
                 randomMessage = messages[Math.floor(Math.random() * messages.length)];
             }
             while (!selectedChannels.has(randomMessage.ChannelID) || !selectedUsers.has(randomMessage.GlobalName));
-            
-            let newGame = {
-                message: randomMessage,
-                roundsLeft: gameData.get(socket.roomID).roundsLeft - 1
-            }
 
-            gameData.set(socket.roomID, newGame);
+            roomData.get(socket.roomID).message = randomMessage;
+            roomData.get(socket.roomID).roundsLeft = roomData.get(socket.roomID).roundsLeft - 1;
 
             // send startGame message to all users
             io.to(socket.roomID).emit('startGame', randomMessage.Message);
