@@ -57,7 +57,6 @@ socket.on('filterDataResponse', (filterData) => {
 
 socket.on('startGame', (messageText) => {
     $('#messageText').text(messageText);
-
     console.log("GAME!");
 
     // switch to game page
@@ -76,22 +75,18 @@ $('#startButton').on('click', function() {
     let selectedChannels = new Set();
     let selectedUsers = new Set();
   
-    // Iterate over checkboxes in the channel filter
-    $('#channelFilter .column').each(function() {
-      $(this).find('input[type="checkbox"]').each(function() {
-        if ($(this).is(':checked')) {
-          selectedChannels.add($(this).val());
-        }
-      });
+    // Iterate over checked-checkboxes
+    $('input[type="checkbox"]:checked').each(function() {
+      if (this.name === "channel") {
+        selectedChannels.add(this.value);
+       } else {
+        selectedUsers.add(this.value);
+        $('#myOptions').append(`<option value="${this.value}">`);
+       }
     });
 
-    // Iterate over checkboxes in the user filter
-    $('#userFilter .column').each(function() {
-      $(this).find('input[type="checkbox"]').each(function() {
-        if ($(this).is(':checked')) {
-          selectedUsers.add($(this).val());
-        }
-      });
+    $("#answer").autocomplete({
+      source: Array.from(selectedUsers)
     });
 
     const serializedData = {
