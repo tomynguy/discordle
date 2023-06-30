@@ -111,7 +111,7 @@
 
   .messageContent {
     display: flex;
-    margin-bottom: 5px;
+    margin-bottom: 1vh;
     flex-direction: row;
     height: fit-content;
     width: 40vw;
@@ -132,8 +132,9 @@
 
   #messageText {
     margin: 0px;
-    flex-wrap: wrap;
     font-size: calc(.8vh + .8vw);
+    width: 100%;
+    word-break: break-all;
   }
 
   #userEntry {
