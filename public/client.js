@@ -3,6 +3,7 @@ const socket = io();
 
 let roomID = "none";
 let username = "none";
+let host = false;
 
 // Event listener for join button
 $('#joinButton').on('click', function () {
@@ -27,7 +28,7 @@ socket.on('connect', () => {
 
 socket.on('joined', (isHost) => {
   // Request filter data map from server and await for filterDataResponse message
-  console.log(`isHost: ${isHost}`);
+  host = isHost; 
   socket.emit('getFilterData');
 });
 
@@ -51,38 +52,89 @@ socket.on('filterDataResponse', (filterData) => {
     populateEntries('username', globalName, globalName, `#col${i++ % 3 + 3}`);
   });
 
+  // Visually disable settings for non-hosts.
+  if (!host) {
+    $('#settingsPanel').addClass('hostWall');
+    $('#startButton').addClass('hostWall');
+  }
+
+  $("#answer").autocomplete({
+    source: Array.from(selectedUsers)
+  });
+
   // switch to room page
   $('#joinContainer').hide();
   $('#roomContainer').show();
+  $('#playerList').show();
 });
 
 socket.on('startGame', (messageText) => {
-  const regex = /\<\:[a-zA-Z0-9]+\:(\d+)\>/;
-  let msg = messageText, emoji, emojiMap = new Map();
-  while (emoji = regex.exec(msg)) {
-    emojiMap.set(emoji.index, `https://cdn.discordapp.com/emojis/${emoji[1]}.png`);
-    msg = msg.substring(0, emoji.index) + msg.substring(emoji.index + emoji[0].length);
+  const regex = /\<\:[a-zA-Z0-9]+\:(\d+)\>|https:\/\/cdn\.discordapp\.com\/attachments\/\d+\/\d+\/[\w-]+\.(mp4|mov|avi|flv|wmv)|https?:\/\/cdn\.discordapp\.com\/attachments\/\d+\/\d+\/[\w-]+\.(png|jpg|jpeg|gif)|https?:\/\/(?:www\.)?youtube\.com\/watch\?v=([\w-]{11})/;
+  let msg = messageText, attachment, emojis = [], media = [];
+  // Parse message of emojis and video/image links
+  while (attachment = regex.exec(msg)) {
+    console.log("balls32131231");
+    if (attachment[1]) {
+      emojis.push([attachment.index, 'emoji', `https://cdn.discordapp.com/emojis/${attachment[1]}.png`]);
+    } else if (attachment[2]) {
+      media.push(['discordVid', attachment[0]]);
+    } else if (attachment[3]) {
+      console.log("balls");
+      media.push(['discordImg', attachment[0]]);
+    } else if (attachment[4]) {
+      console.log("Youtube!")
+    }
+    msg = msg.substring(0, attachment.index) + msg.substring(attachment.index + attachment[0].length);
   }
-  
+
   $('#messageTextContainer').text("");
   
-  let currentIndex = 0, msgText;
-  for (let index of emojiMap.keys()) {
-    msgText = msg.substring(currentIndex, index);
+  let index = 0, msgText;
+  // Insert text->emoji->text->...->emoji
+  for (attachment of emojis) {
+    // Insert text before emoji
+    msgText = msg.substring(index, attachment[0]);
     if (msgText.length > 0) {
       $('#messageTextContainer').append($('<span>').addClass('msgText').text(msgText));
     }
-    $('#messageTextContainer').append($('<span>').append($('<img>', {
-      src: emojiMap.get(index),
-      alt: emojiMap.get(index),
-      class: 'emoji'
-    })));
-    currentIndex = ++index;
+    // Insert emoji
+    if (attachment[1] == 'emoji') {
+      $('#messageTextContainer').append($('<span>').append($('<img>', {
+        src: attachment[2],
+        alt: attachment[2],
+        class: 'emoji'
+      })));
+    }
+
+    // Update index to start of next text segment
+    index = attachment[0] + 1;
   }
-  msgText = msg.substring(currentIndex);
+
+  // Insert remaining text after last emoji
+  msgText = msg.substring(index);
   if (msgText.length > 0) {
     $('#messageTextContainer').append($('<span>').addClass('msgText').text(msgText));
   }
+
+  // Append media to the end of the message
+  for (attachment of media) {
+    if (attachment[0] == 'discordVid') {
+      $('#messageTextContainer').append($('<span>', { class: 'mediaContainer' }).append($('<video>', {
+        controls: true,
+        src: attachment[1],
+        alt: attachment[1],
+        type: 'video/mp4',
+        class: 'media'
+      })));
+    } else if (attachment[0] == 'discordImg') {
+      $('#messageTextContainer').append($('<span>', { class: 'mediaContainer' }).append($('<img>', {
+        src: attachment[1],
+        alt: attachment[1],
+        class: 'media'
+      })));
+    }
+  }
+
   // switch to game page
   $('#roomContainer').hide();
   $('#gameContainer').show();
@@ -93,6 +145,26 @@ socket.on('gameEnd', () => {
   // switch to room page
   $('#gameContainer').hide();
   $('#roomContainer').show();
+});
+
+socket.on('playerListResponse', (playerListData) => {
+  console.log('updating player list');
+
+  // parse player list data (map from username to score)
+  let playerList = new Set(JSON.parse(playerListData));
+
+  // clear tables
+  $('#playerTable tbody').empty();
+  $('#scoreTable tbody').empty();
+
+  // populate player list table with usernames
+  playerList.forEach((username) => {
+    // update room page's user table
+    const $playerTableRow = $('<tr></tr>');
+    $playerTableRow.append($('<td></td>').text(username));
+    $('#playerTable tbody').append($playerTableRow);
+  });
+  
 });
 
 socket.on('error', (error) => {
@@ -114,10 +186,6 @@ $('#startButton').on('click', function () {
       selectedUsers.add(this.value);
       $('#myOptions').append(`<option value="${this.value}">`);
     }
-  });
-
-  $("#answer").autocomplete({
-    source: Array.from(selectedUsers)
   });
 
   const serializedData = {

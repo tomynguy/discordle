@@ -36,21 +36,21 @@ client.on('messageCreate', async (message) => {
             
             const fetchedMessages = await channel.messages.fetch({ limit: 100 });
             fetchedMessages.forEach((msg) => {
-                if (!msg.author.bot && msg.content.length > 0) {
+                let attachments = "";
+                msg.attachments.map((attachment) => attachments += attachment.url);
+                if (!msg.author.bot && (msg.content.length + attachments.length) > 0) {
                     const author = {
                         globalName: msg.author.username,
                         displayName: msg.member ? msg.member.user : '',
                         nickname: msg.member ? msg.member.nickname : ''
                     };
-                    let attachments = msg.attachments.map((attachment) => attachment.url);
                     messagesData.push({
                         channel: channel.name,
                         channelID: channel.id,
                         globalName: author.globalName,
                         displayName: author.displayName,
                         nickname: author.nickname,
-                        message: msg.content,
-                        attachments: attachments
+                        message: msg.content + attachments
                     });
                 }
             });
@@ -65,8 +65,7 @@ client.on('messageCreate', async (message) => {
                 { id: 'globalName', title: 'GlobalName' },
                 { id: 'displayName', title: 'DisplayName' },
                 { id: 'nickname', title: 'Nickname' },
-                { id: 'message', title: 'Message' },
-                { id: 'attachments', title: 'Attachments' }
+                { id: 'message', title: 'Message' }
             ]
         });
 

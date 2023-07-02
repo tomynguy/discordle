@@ -22,7 +22,7 @@
   }
 
   h1 {
-    font-size: calc(3vh + 3vw);
+    font-size: calc(2vh + 2vw);
     margin: calc(.5vh + .5vw);
   }
 
@@ -65,6 +65,11 @@
     margin: calc(.5vh + .5vw);
   }
 
+  .hostWall {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
   .filter {
     display: table;
     width: 60vw;
@@ -98,7 +103,6 @@
 
   #messageLeft {
     width: 5vw;
-    margin-bottom: auto;
   }
 
   #pfp {
@@ -151,8 +155,20 @@
     height: auto;
   }
 
+  .mediaContainer {
+    width: 100%;
+    height: fit-content;
+  }
+
+  .media {
+    max-width: 100%;
+    max-height: 30vh;
+    margin-right: auto;
+    height: fit-content;
+    width: auto;
+  }
+
   #userEntry {
-    position: relative;
     flex-direction: row;
     font-size: calc(1vh + 1vw);
     margin-bottom: 3vh;
@@ -161,4 +177,8 @@
   #answer {
     margin-bottom: 0px;
     margin-right: 1vw;
+  }
+
+  #playerList {
+    display: none;
   }

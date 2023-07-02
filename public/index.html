@@ -11,9 +11,11 @@
 
 <body>
   <div class="container">
+    <!-- Banner -->
     <div class="logo">
       <h1>Discordle</h1>
     </div>
+
     <!-- Join Page -->
     <div id="joinContainer">
       <div class="login">
@@ -22,6 +24,7 @@
         <button id="joinButton">Join Room</button>
       </div>
     </div>
+
     <!-- Room Page -->
     <div id="roomContainer">
       <div id="roomInfoDiv">
@@ -45,6 +48,7 @@
       </div>
       <button id="startButton">Start Game</button>
     </div>
+
     <!-- Game Page -->
     <div id="gameContainer">
       <div id="messageContainer">
@@ -66,10 +70,25 @@
         <button id="answerButton">Answer</button>
       </div>
     </div>
+
+    <!-- Player List -->
+    <div id="playerList">
+      <table id="playerTable">
+        <thead>
+          <tr>
+            <th>Player List</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Rows will be populated in client.js -->
+        </tbody>
+      </table>
+    </div>
   </div>
   <script src="https://cdn.socket.io/4.3.2/socket.io.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://code.jquery.com/ui/1.13.0/jquery-ui.min.js"></script>
+  
   <script src="client.js"></script>
 </body>
 

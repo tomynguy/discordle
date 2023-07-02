@@ -8,20 +8,13 @@ const fs = require('fs');
 const csv = require('csv-parser');
 
 const PORT = 3000;
-let roomList = new Map([['balls', new Set()]]);
-let roomMessageData = new Map([['balls', undefined]]); // map from room -> parsed message data
-// map from room -> map about components of the parsed data (i.e. channels names/ids, usernames), keys: "channels", "users"
-let roomFilterData = new Map([
-    ['balls', 
-    {"channels": new Map([[1, "channel1"]]),
-     "usernames": new Set([{
-        globalName: "tomynguy",
-        displayName: "Nathan",
-        nickname: "WackyFlacky"}]),
-    }]
-]);
 
-let roomData = new Map(); // map from room -> {components of room (message, roundsLeft, inGame)}
+// map from room -> parsed message data
+let roomMessageData = new Map();
+// map from room -> map about components of the parsed data (i.e. channels names/ids, usernames), keys: "channels", "users"
+let roomFilterData = new Map();
+// map from room -> {components of room (message, roundsLeft, inGame)}
+let roomData = new Map();
 
 module.exports = {
     createRoom: createRoom,
@@ -38,14 +31,16 @@ async function createRoom(file, recurse = 0) {
     if (roomMessageData.has(room)) room = createRoom(file, recurse + 1);
     else {
         // Valid room ID, so create and set up room
-        roomList.set(room, new Set());
         const messageData = await parseMessageData(file);
         roomMessageData.set(room, messageData);
         roomFilterData.set(room, getFilterData(room));
         roomData.set(room, {
             message: null,
             roundsLeft: 1,
-            inGame: false
+            inGame: false,
+            playerList: new Set(),
+            selectedChannels: null,
+            selectedUsers: null,
         });
     }
     return room;
@@ -112,9 +107,9 @@ io.on('connection', (socket) => {
     // Starts joining process if valid, otherwise send error
     socket.on('join', ({ roomID, username }) => {
         roomID = roomID.toLowerCase();
-        if (!roomList.has(roomID)) {
+        if (!roomData.has(roomID)) {
             socket.emit('error', 'Room not found');
-        } else if (roomList.get(roomID).has(username)) {
+        } else if (roomData.get(roomID).playerList.has(username)) {
             socket.emit('error', 'Username taken');
         } else if (username === '') {
             socket.emit('error', 'Invalid username');
@@ -122,45 +117,46 @@ io.on('connection', (socket) => {
             socket.roomID = roomID;
             socket.username = username;
             socket.join(roomID);
-            roomList.get(roomID).add(username);
+            roomData.get(roomID).playerList.add(username);
 
             // if there's not a host yet, make them new host
-            
-
-            if(roomList.get(roomID).size == 1) {
-                socket.isHost = true;
-            }
-            else {
-                socket.isHost = false;
-            }
+            socket.isHost = (roomData.get(roomID).playerList.size == 1);
 
             socket.emit('joined', socket.isHost);
+
+            // update clients on player list
+            io.to(socket.roomID).emit('playerListResponse', JSON.stringify([...roomData.get(socket.roomID).playerList]));
         }
     });
 
     // Updates rooms upon client disconnection
     socket.on('disconnect', () => {
         console.log('Client Disconnected');
-        let room = roomList.get(socket.roomID);
+        let room = roomData.get(socket.roomID);
         if (room) {
-            socket.leave(socket.roomID);
-            room.delete(socket.username);
-            roomList.get(roomID).delete(socket.username);
-
-            if(socket.isHost) {
-                // assign a new host
-                const socketRoom = io.sockets.adapter.rooms.get(socket.roomID);
-                if(socketRoom != null && socketRoom.size > 0) {
-                    for(const socketID of socketRoom) {
+            room.playerList.delete(socket.username);
+            // Delete room and update maps if all users leave.
+            if (room.playerList.size == 0) {
+                [roomMessageData, roomFilterData, roomData].forEach(map => map.delete(socket.roomID));
+                return;
+            }
+            // Assign a new host 
+            else if (socket.isHost) {
+                let socketRoom = io.sockets.adapter.rooms.get(socket.roomID);
+                if (socketRoom) {
+                    for (const socketID of socketRoom) {
                         const socketInRoom = io.sockets.sockets.get(socketID);
-
                         socketInRoom.isHost = true;
                         break;
                     }
                 }
             }
+
+            // update clients on player list
+            io.to(socket.roomID).emit('playerListResponse', JSON.stringify([...roomData.get(socket.roomID).playerList]));
         }
     });
+    
     
     // Event listener for getFilterData event
     // returns: a Map of all filter data (channels, usernames) associated with this room
@@ -182,9 +178,6 @@ io.on('connection', (socket) => {
     // Event listener for setupGame event
     // this event is triggered when client presses start game and sends their selected settings
     // returns: a start game message along with a random message fitting criteria
-    let selectedChannels;
-    let selectedUsers;
-    let messages;
 
     socket.on('setupGame', (settings) => {
         // ignore non-host requests
@@ -194,16 +187,16 @@ io.on('connection', (socket) => {
         }
 
         const data = JSON.parse(settings);
-        selectedChannels = new Set(JSON.parse(data.channels));
-        selectedUsers = new Set(JSON.parse(data.usernames));
+        roomData.get(socket.roomID).selectedChannels = new Set(JSON.parse(data.channels));
+        roomData.get(socket.roomID).selectedUsers = new Set(JSON.parse(data.usernames));
 
         // select random message that fits these filters
-        messages = roomMessageData.get(socket.roomID);
+        const messages = roomMessageData.get(socket.roomID);
         let randomMessage;
         do {
             randomMessage = messages[Math.floor(Math.random() * messages.length)];
         }
-        while (!selectedChannels.has(randomMessage.ChannelID) || !selectedUsers.has(randomMessage.GlobalName));
+        while (!roomData.get(socket.roomID).selectedChannels.has(randomMessage.ChannelID) || !roomData.get(socket.roomID).selectedUsers.has(randomMessage.GlobalName));
 
         roomData.get(socket.roomID).message = randomMessage;
         roomData.get(socket.roomID).roundsLeft = data.numRounds;
@@ -220,7 +213,7 @@ io.on('connection', (socket) => {
         }
 
         console.log(`Answer was: ${roomData.get(socket.roomID).message.GlobalName}`);
-
+        
         // round finished
 
         if(roomData.get(socket.roomID).roundsLeft == 1) {
@@ -230,12 +223,14 @@ io.on('connection', (socket) => {
             io.to(socket.roomID).emit('gameEnd');
         }
         else {
+            const messages = roomMessageData.get(socket.roomID);
+
             // start next round
             let randomMessage;
             do {
                 randomMessage = messages[Math.floor(Math.random() * messages.length)];
             }
-            while (!selectedChannels.has(randomMessage.ChannelID) || !selectedUsers.has(randomMessage.GlobalName));
+            while (!roomData.get(socket.roomID).selectedChannels.has(randomMessage.ChannelID) || !roomData.get(socket.roomID).selectedUsers.has(randomMessage.GlobalName));
 
             roomData.get(socket.roomID).message = randomMessage;
             roomData.get(socket.roomID).roundsLeft = roomData.get(socket.roomID).roundsLeft - 1;
@@ -243,13 +238,10 @@ io.on('connection', (socket) => {
             // send startGame message to all users
             io.to(socket.roomID).emit('startGame', randomMessage.Message);
         }
-        
-        
     });
 
-    // Get attributes
-    socket.on('balls', () => {
-        console.log(socket.username, socket.room);
+    socket.on('playerListRequest', () => {
+        socket.emit('playerListResponse', JSON.stringify([...roomData.get(socket.roomID).playerList]));
     });
 });
 
