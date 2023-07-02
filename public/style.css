@@ -39,20 +39,26 @@
     background-color: #202225;
     color: #fff;
     border-radius: calc(.3vh + .3vw);
+    box-shadow: 0 0 calc(.5vh + .5vw) rgba(0, 0, 0, 0.3);
   }
   
   button {
-    font-size: calc(1vh + 1vw);
+    font-size: calc(.8vh + .8vw);
     padding: calc(.4vh + .4vw);
     background-color: #7289da;
     color: #fff;
-    border: none;
+    border: calc(.1vh + .1vw) solid #5667a3;
     cursor: pointer;
     border-radius: calc(1vh + 1vw);
+    box-shadow: 0 0 calc(.5vh + .5vw) rgba(0, 0, 0, 0.3);
   }
   
   button:hover {
     background-color: #677bc4;
+  }
+
+  #roomInfoDiv {
+    height: 5vh;
   }
 
   #roomContainer {
@@ -62,7 +68,7 @@
   #settingsPanel {
     background-color: #282b30;
     padding: calc(.5vh + .5vw);
-    margin: calc(.5vh + .5vw);
+    margin-bottom: calc(.5vh + .5vw);
   }
 
   .hostWall {
@@ -87,12 +93,13 @@
   }
 
   #gameContainer {
+    padding-right: 1vw;
     display: none;
     align-self: center;
   }
 
   #messageContainer {
-    margin-top: 5vh;
+    margin-top: 4vh;
     margin-bottom: 3vh;
     min-height: 69vh;
     width: 45vw;
@@ -182,38 +189,39 @@
   #mainContainer {
     display: none;
     grid-template-columns: 1fr 3fr 1fr;
-    gap: 20px;
     place-items: center;
+  }
+
+  .tableBorder {
+    border-collapse: collapse;
+    background-color: #2C2F33;
+    border: calc(.07vh + .07vw) solid #202225;
+    box-shadow: 0 0 calc(.5vh + .5vw) rgba(0, 0, 0, 0.3);
   }
 
 
   /* Styling for the player list table */
-  #playerList {
-    display: inline-block;
-    vertical-align: top;
-    margin-right: 20px;
+  .outerColumn {
+    margin-top: 5vh;
+    margin-bottom: auto;
   }
   
   #playerTable {
-    width: 250px;
-    border-collapse: collapse;
-    background-color: #2C2F33;
-    border: 1px solid #202225;
-    border-radius: 5px;
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+    width: 15vw;
   }
   
   #playerTable th {
-    padding: 10px;
+    padding: calc(.5vh + .5vw);
     text-align: center;
     background-color: #202225;
-    border-bottom: 1px solid #36393F;
+    border-bottom: calc(.01vh + .01vw) solid #36393F;
   }
   
   #playerTable td {
-    padding: 8px 10px;
+    padding: calc(.2vh + .2vw) calc(.3vh + .3vw);
     text-align: left;
-    border-bottom: 1px solid #36393F;
+    border-bottom: calc(.01vh + .01vw) solid #36393F;
+    word-wrap: break-word;
   }
   
   #playerTable tr:last-child td {

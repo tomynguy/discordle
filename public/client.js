@@ -60,7 +60,7 @@ socket.on('filterDataResponse', (filterData) => {
   console.log(usernames);
   // update room page contents
   let i = 0;
-  $('#roomInfoDisplay').text(`Room ID: ${roomID}, Username: ${username}`);
+  $('#roomInfoDisplay').text(`Room ID: ${roomID}`);
   // populate channel filter form with each channel
   channels.forEach((channelName, channelID) => {
     populateEntries(i, 'channel', channelID, channelName, `#col${i++ % 3}`);

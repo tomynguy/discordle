@@ -26,14 +26,14 @@
     </div>
 
     <div id="mainContainer">
-      <div id="leftColumn"></div>
+      <div class="outerColumn"></div>
       <div id="middleColumn">
         <!-- Room Page -->
         <div id="roomContainer">
           <div id="roomInfoDiv">
             <p id="roomInfoDisplay"></p>
           </div>
-          <div id="settingsPanel">
+          <div class="tableBorder" id="settingsPanel">
             <p>Select which channels to include:</p>
             <div class="filter" id="channelFilter">
               <div class="column" id="col0"></div>
@@ -75,20 +75,18 @@
         </div>
       </div>
 
-      <div id="rightColumn">
+      <div class="outerColumn">
         <!-- Player List -->
-        <div id="playerList">
-          <table id="playerTable">
-            <thead>
-              <tr>
-                <th>Player List</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- Rows will be populated in client.js -->
-            </tbody>
-          </table>
-        </div>
+        <table class="tableBorder" id="playerTable">
+          <thead>
+            <tr>
+              <th>Player List</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Rows will be populated in client.js -->
+          </tbody>
+        </table>
       </div>
 
     </div>
