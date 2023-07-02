@@ -25,64 +25,71 @@
       </div>
     </div>
 
-    <!-- Room Page -->
-    <div id="roomContainer">
-      <div id="roomInfoDiv">
-        <p id="roomInfoDisplay"></p>
-      </div>
-      <div id="settingsPanel">
-        <p>Select which channels to include:</p>
-        <div class="filter" id="channelFilter">
-          <div class="column" id="col0"></div>
-          <div class="column" id="col1"></div>
-          <div class="column" id="col2"></div>
-        </div>
-        <p>Select which users to include:</p>
-        <div class="filter" id="userFilter">
-          <div class="column" id="col3"></div>
-          <div class="column" id="col4"></div>
-          <div class="column" id="col5"></div>
-        </div>
-        <p>Number of rounds:</p>
-        <input type="number" id="numRoundsInput" value="5">
-      </div>
-      <button id="startButton">Start Game</button>
-    </div>
-
-    <!-- Game Page -->
-    <div id="gameContainer">
-      <div id="messageContainer">
-        <div id="messageLeft">
-          <img id="pfp" src="discordPFP.png" alt="Avatar">
-        </div>
-        <div id="messageRight">
-          <div class="messageContent">
-            <span id="author">Discord User</span>
-            <span id="timestamp">Today at 1:44 AM</span>
+    <div id="mainContainer">
+      <div id="leftColumn">
+        <!-- Room Page -->
+        <div id="roomContainer">
+          <div id="roomInfoDiv">
+            <p id="roomInfoDisplay"></p>
           </div>
-          <div class="messageContent">
-            <div id="messageTextContainer"></div>
+          <div id="settingsPanel">
+            <p>Select which channels to include:</p>
+            <div class="filter" id="channelFilter">
+              <div class="column" id="col0"></div>
+              <div class="column" id="col1"></div>
+              <div class="column" id="col2"></div>
+            </div>
+            <p>Select which users to include:</p>
+            <div class="filter" id="userFilter">
+              <div class="column" id="col3"></div>
+              <div class="column" id="col4"></div>
+              <div class="column" id="col5"></div>
+            </div>
+            <p>Number of rounds:</p>
+            <input type="number" id="numRoundsInput" value="5">
+          </div>
+          <button id="startButton">Start Game</button>
+        </div>
+
+        <!-- Game Page -->
+        <div id="gameContainer">
+          <div id="messageContainer">
+            <div id="messageLeft">
+              <img id="pfp" src="discordPFP.png" alt="Avatar">
+            </div>
+            <div id="messageRight">
+              <div class="messageContent">
+                <span id="author">Discord User</span>
+                <span id="timestamp">Today at 1:44 AM</span>
+              </div>
+              <div class="messageContent">
+                <div id="messageTextContainer"></div>
+              </div>
+            </div>
+          </div>
+          <div id="userEntry">
+            <input type="text" class="inputBox" id="answer" placeholder="Your answer"/>
+            <button id="answerButton">Answer</button>
           </div>
         </div>
       </div>
-      <div id="userEntry">
-        <input type="text" class="inputBox" id="answer" placeholder="Your answer"/>
-        <button id="answerButton">Answer</button>
-      </div>
-    </div>
 
-    <!-- Player List -->
-    <div id="playerList">
-      <table id="playerTable">
-        <thead>
-          <tr>
-            <th>Player List</th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- Rows will be populated in client.js -->
-        </tbody>
-      </table>
+      <div id="rightColumn">
+        <!-- Player List -->
+        <div id="playerList">
+          <table id="playerTable">
+            <thead>
+              <tr>
+                <th>Player List</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Rows will be populated in client.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
   </div>
   <script src="https://cdn.socket.io/4.3.2/socket.io.min.js"></script>

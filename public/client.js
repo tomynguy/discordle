@@ -35,6 +35,7 @@ $('#answer').on('keydown', function(event) {
 // Socket.io event listeners
 socket.on('connect', () => {
   console.log('Connected to server');
+
   const urlParams = new URLSearchParams(window.location.search);
   const room = urlParams.get('room');
   const name = urlParams.get('name');
@@ -78,6 +79,8 @@ socket.on('filterDataResponse', (filterData) => {
 
   // switch to room page
   $('#joinContainer').hide();
+
+  $('#mainContainer').css('display', 'grid');
   $('#roomContainer').show();
   $('#playerList').show();
 });
