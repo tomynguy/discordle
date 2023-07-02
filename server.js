@@ -240,6 +240,11 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('clickCheckbox', (id, state) => {
+        if (socket.isHost)
+            io.to(socket.roomID).emit('updateCheckbox', id, state);
+    });
+
     socket.on('playerListRequest', () => {
         socket.emit('playerListResponse', JSON.stringify([...roomData.get(socket.roomID).playerList]));
     });

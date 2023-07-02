@@ -5,13 +5,31 @@ let roomID = "none";
 let username = "none";
 let host = false;
 
-// Event listener for join button
+// Event listeners
 $('#joinButton').on('click', function () {
   roomID = $('#roomID').val();
   username = $('#username').val();
   console.log(roomID);
   // Emit join event to the server
   socket.emit('join', { roomID, username });
+});
+
+$('#roomID').on('keydown', function(event) {
+  if (event.key === 'Enter') {
+    $('#username')[0].focus();
+  }
+});
+
+$('#username').on('keydown', function(event) {
+  if (event.key === 'Enter') {
+    $('#joinButton').trigger('click');
+  }
+});
+
+$('#answer').on('keydown', function(event) {
+  if (event.key === 'Enter') {
+    $('#answerButton').trigger('click');
+  }
 });
 
 // Socket.io event listeners
@@ -44,12 +62,12 @@ socket.on('filterDataResponse', (filterData) => {
   $('#roomInfoDisplay').text(`Room ID: ${roomID}, Username: ${username}`);
   // populate channel filter form with each channel
   channels.forEach((channelName, channelID) => {
-    populateEntries('channel', channelID, channelName, `#col${i++ % 3}`);
+    populateEntries(i, 'channel', channelID, channelName, `#col${i++ % 3}`);
   });
 
   // populate channel filter form with each channel
   usernames.forEach(({ displayName, nickname }, globalName) => {
-    populateEntries('username', globalName, globalName, `#col${i++ % 3 + 3}`);
+    populateEntries(i, 'username', globalName, globalName, `#col${i++ % 3 + 3}`);
   });
 
   // Visually disable settings for non-hosts.
@@ -57,10 +75,6 @@ socket.on('filterDataResponse', (filterData) => {
     $('#settingsPanel').addClass('hostWall');
     $('#startButton').addClass('hostWall');
   }
-
-  $("#answer").autocomplete({
-    source: Array.from(selectedUsers)
-  });
 
   // switch to room page
   $('#joinContainer').hide();
@@ -115,6 +129,11 @@ socket.on('startGame', (messageText) => {
   if (msgText.length > 0) {
     $('#messageTextContainer').append($('<span>').addClass('msgText').text(msgText));
   }
+
+  // Add autocomplete to input
+  $("#answer").autocomplete({
+    source: $('input[type="checkbox"]:checked').map(function() {return this.value;}).toArray()
+  });
 
   // Append media to the end of the message
   for (attachment of media) {
@@ -205,11 +224,21 @@ $('#answerButton').on('click', function () {
   return false;
 });
 
-function populateEntries(name, val, text, parent) {
+function populateEntries(id, name, val, text, parent) {
   const entry = $("<div>", {
     class: "entryContainer",
-    html: `<input type="checkbox" name="${name}" value="${val}" checked>${text}`
+    html: `<input type="checkbox" id="checkbox${id}" name="${name}" value="${val}" checked>${text}`
+  });
+
+  entry.find('input[type="checkbox"]').on('click', function() {
+    const checkboxId = $(this).attr('id');
+    const checkboxState = $(this).is(':checked');
+    socket.emit('clickCheckbox', checkboxId, checkboxState );
   });
 
   $(parent).append(entry);
 }
+
+socket.on('updateCheckbox', (id, state) => {
+  $(`#${id}`).prop('checked', state);
+});
