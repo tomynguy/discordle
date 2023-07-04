@@ -245,3 +245,16 @@
   .score {
     text-align: right;
   }
+
+  .yellow-text {
+    color: #FDDC5C;
+  }
+
+  label {
+    display: block;
+    margin-top: 1.25vh;
+  }
+
+  .settingSectionTitle {
+    font-size: calc(.85vh + .85vw)
+  }

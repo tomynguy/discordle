@@ -32,6 +32,30 @@ $('#answer').on('keydown', function(event) {
   }
 });
 
+$('#selectAllChannelsCheckbox').on('click', function () {
+  // Get current state of select all checkbox
+  const isChecked = this.checked;
+
+  // Iterate over channel checkboxes
+  $('input[type="checkbox"][name="channel"]').each(function () {
+    $(this).prop('checked', isChecked);
+    const checkboxId = $(this).attr('id');
+    socket.emit('clickCheckbox', checkboxId, isChecked);
+  });
+});
+
+$('#selectAllUsersCheckbox').on('click', function () {
+  // Get current state of select all checkbox
+  const isChecked = this.checked;
+
+  // Iterate over channel checkboxes
+  $('input[type="checkbox"][name="username"]').each(function () {
+    $(this).prop('checked', isChecked);
+    const checkboxId = $(this).attr('id');
+    socket.emit('clickCheckbox', checkboxId, isChecked);
+  });
+});
+
 // Socket.io event listeners
 socket.on('connect', () => {
   console.log('Connected to server');
@@ -186,10 +210,8 @@ socket.on('playerListResponse', (playerListData) => {
 
   // populate player list table with usernames
   sortedPlayers.forEach((player) => {
-    if(player.isHost) {
-      player.username += '👑';
-    }
-    $('#playerTable tbody').append(`<tr><td class="username">${player.username}</td><td class="score">${player.score}</td></tr>`);
+    const isHostElement = player.isHost ? 'yellow-text' : '';
+  $('#playerTable tbody').append(`<tr><td class="username ${isHostElement}">${player.username}</td><td class="score">${player.score}</td></tr>`);
   });
   
 });

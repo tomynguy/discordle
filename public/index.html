@@ -34,19 +34,27 @@
             <p id="roomInfoDisplay"></p>
           </div>
           <div class="tableBorder" id="settingsPanel">
-            <p>Select which channels to include:</p>
+            <p class="settingSectionTitle">Select which channels to include:</p>
             <div class="filter" id="channelFilter">
               <div class="column" id="col0"></div>
               <div class="column" id="col1"></div>
               <div class="column" id="col2"></div>
             </div>
-            <p>Select which users to include:</p>
+            <label>
+              <input type="checkbox" id="selectAllChannelsCheckbox">
+              Select/Deselect All
+            </label>
+            <p class="settingSectionTitle">Select which users to include:</p>
             <div class="filter" id="userFilter">
               <div class="column" id="col3"></div>
               <div class="column" id="col4"></div>
               <div class="column" id="col5"></div>
             </div>
-            <p>General Settings</p>
+            <label>
+              <input type="checkbox" id="selectAllUsersCheckbox">
+              Select/Deselect All
+            </label>
+            <p class="settingSectionTitle">General Settings</p>
             <div class="genSettings">
               <div>
                 <p>Number of rounds:</p>
