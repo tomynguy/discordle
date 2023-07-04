@@ -160,6 +160,7 @@ socket.on('startGame', (messageText) => {
   $('#roomContainer').hide();
   $('#response').hide();
   $('#userEntry').removeClass('block');
+  $('#answer').val("");
   $('#gameContainer').show();
   $('#answer')[0].focus();
   document.documentElement.scrollTop = document.documentElement.scrollHeight;
