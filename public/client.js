@@ -212,7 +212,8 @@ $('#startButton').on('click', function () {
   const serializedData = {
     channels: JSON.stringify([...selectedChannels]),
     usernames: JSON.stringify([...selectedUsers]),
-    numRounds: Math.max($('#numRoundsInput').val(), 1)
+    numRounds: Math.max($('#numRoundsInput').val(), 1),
+    minMsg: Math.max($('#minMsgInput').val(), 1)
   };
 
   socket.emit('setupGame', JSON.stringify(serializedData));

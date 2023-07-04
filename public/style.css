@@ -71,6 +71,13 @@
     margin-bottom: calc(.5vh + .5vw);
   }
 
+  .genSettings {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    align-items: center;
+    width: 100%;
+  }
+
   .block {
     opacity: 0.5;
     pointer-events: none;
@@ -118,6 +125,7 @@
   .pfp {
     width: 100%;
     height: auto;
+    border-radius: 50%;
   }
   
   .messageRight{
