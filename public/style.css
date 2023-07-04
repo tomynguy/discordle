@@ -71,7 +71,7 @@
     margin-bottom: calc(.5vh + .5vw);
   }
 
-  .hostWall {
+  .block {
     opacity: 0.5;
     pointer-events: none;
   }
@@ -98,26 +98,29 @@
     align-self: center;
   }
 
-  #messageContainer {
+  .chatContainer {
     margin-top: 4vh;
-    margin-bottom: 3vh;
-    min-height: 69vh;
     width: 45vw;
+    min-height: 69vh;
+  }
+
+  .messageContainer {
     flex-direction: row;
     overflow: hidden;
     align-items: flex-start;
+    margin-bottom: 3vh
   }
 
-  #messageLeft {
+  .messageLeft {
     width: 5vw;
   }
 
-  #pfp {
+  .pfp {
     width: 100%;
     height: auto;
   }
   
-  #messageRight{
+  .messageRight{
     flex-direction: column;
     padding-left: 1vw;
   }
@@ -130,20 +133,20 @@
     width: 40vw;
   }
   
-  #author {
+  .author {
     font-weight: bold;
     align-self: last baseline;
     margin-right: 1vw;
     font-size: calc(1vh + 1vw);
   }
   
-  #timestamp {
+  .timestamp {
     color: gray;
     align-self: last baseline;
     font-size: calc(.6vh + .6vw);
   }
 
-  #messageTextContainer {
+  .messageTextContainer {
     margin: 0px;
     font-size: calc(.8vh + .8vw);
     width: 100%;
@@ -219,11 +222,18 @@
   
   #playerTable td {
     padding: calc(.2vh + .2vw) calc(.3vh + .3vw);
-    text-align: left;
     border-bottom: calc(.01vh + .01vw) solid #36393F;
     word-wrap: break-word;
   }
   
   #playerTable tr:last-child td {
     border-bottom: none;
+  }
+
+  .username {
+    text-align: left;
+  }
+
+  .score {
+    text-align: right;
   }

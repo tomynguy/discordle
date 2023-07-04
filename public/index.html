@@ -54,17 +54,33 @@
 
         <!-- Game Page -->
         <div id="gameContainer">
-          <div id="messageContainer">
-            <div id="messageLeft">
-              <img id="pfp" src="discordPFP.png" alt="Avatar">
-            </div>
-            <div id="messageRight">
-              <div class="messageContent">
-                <span id="author">Discord User</span>
-                <span id="timestamp">Today at 1:44 AM</span>
+          <div class="chatContainer">
+            <div class="messageContainer">
+              <div class="messageLeft">
+                <img class="pfp" src="discordPFP.png" alt="Avatar">
               </div>
-              <div class="messageContent">
-                <div id="messageTextContainer"></div>
+              <div class="messageRight">
+                <div class="messageContent">
+                  <span class="author">Discord User</span>
+                  <span class="timestamp">Today at 1:44 AM</span>
+                </div>
+                <div class="messageContent">
+                  <div id="messageTextContainer" class="messageTextContainer"></div>
+                </div>
+              </div>
+            </div>
+            <div id="response" class="messageContainer">
+              <div class="messageLeft">
+                <img class="pfp" src="discordPFP.png" alt="Avatar">
+              </div>
+              <div class="messageRight">
+                <div class="messageContent">
+                  <span class="author">Discordle</span>
+                  <span class="timestamp">Today at 1:44 AM</span>
+                </div>
+                <div class="messageContent">
+                  <div id="responseMessageTextContainer" class="messageTextContainer"></div>
+                </div>
               </div>
             </div>
           </div>
@@ -80,7 +96,7 @@
         <table class="tableBorder" id="playerTable">
           <thead>
             <tr>
-              <th>Player List</th>
+              <th colspan="2">Players</th>
             </tr>
           </thead>
           <tbody>

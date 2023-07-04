@@ -34,26 +34,41 @@ client.on('messageCreate', async (message) => {
             const botPermissionsIn = message.guild.members.me.permissionsIn(channel);
             if (!botPermissionsIn.has(PermissionsBitField.Flags.ViewChannel)) continue;
             
-            const fetchedMessages = await channel.messages.fetch({ limit: 100 });
-            fetchedMessages.forEach((msg) => {
-                let attachments = "";
-                msg.attachments.map((attachment) => attachments += attachment.url);
-                if (!msg.author.bot && (msg.content.length + attachments.length) > 0) {
-                    const author = {
-                        globalName: msg.author.username,
-                        displayName: msg.member ? msg.member.user : '',
-                        nickname: msg.member ? msg.member.nickname : ''
-                    };
-                    messagesData.push({
-                        channel: channel.name,
-                        channelID: channel.id,
-                        globalName: author.globalName,
-                        displayName: author.displayName,
-                        nickname: author.nickname,
-                        message: msg.content + attachments
-                    });
+            let length = 100;
+            let messagePointer = null;
+
+            while(length == 100) {
+                length = 0;
+                if(messagePointer == null) {
+                    fetchedMessages = await channel.messages.fetch({ limit: 100});
                 }
-            });
+                else {
+                    fetchedMessages = await channel.messages.fetch({ limit: 100, before: messagePointer.id });
+                }
+
+                fetchedMessages.forEach((msg) => {
+                    let attachments = "";
+                    msg.attachments.map((attachment) => attachments += attachment.url);
+                    if (!msg.author.bot && (msg.content.length + attachments.length) > 0) {
+                        const author = {
+                            globalName: msg.author.username,
+                            displayName: msg.member ? msg.member.user : '',
+                            nickname: msg.member ? msg.member.nickname : ''
+                        };
+                        messagesData.push({
+                            channel: channel.name,
+                            channelID: channel.id,
+                            globalName: author.globalName,
+                            displayName: author.displayName,
+                            nickname: author.nickname,
+                            message: msg.content + attachments
+                        });
+                    }
+                    messagePointer = msg;
+                    length++;
+                });
+            }
+
         }
 
         // Prepare CSV file

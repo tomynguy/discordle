@@ -73,8 +73,8 @@ socket.on('filterDataResponse', (filterData) => {
 
   // Visually disable settings for non-hosts.
   if (!host) {
-    $('#settingsPanel').addClass('hostWall');
-    $('#startButton').addClass('hostWall');
+    $('#settingsPanel').addClass('block');
+    $('#startButton').addClass('block');
   }
 
   // switch to room page
@@ -86,11 +86,10 @@ socket.on('filterDataResponse', (filterData) => {
 });
 
 socket.on('startGame', (messageText) => {
-  const regex = /\<\:[a-zA-Z0-9]+\:(\d+)\>|https:\/\/cdn\.discordapp\.com\/attachments\/\d+\/\d+\/[\w-]+\.(mp4|mov|avi|flv|wmv)|https?:\/\/cdn\.discordapp\.com\/attachments\/\d+\/\d+\/[\w-]+\.(png|jpg|jpeg|gif)|https?:\/\/(?:www\.)?youtube\.com\/watch\?v=([\w-]{11})/;
+  const regex = /\<\:[a-zA-Z0-9]+\:(\d+)\>|https:\/\/cdn\.discordapp\.com\/attachments\/\d+\/\d+\/[\w-]+\.(mp4|mov|avi|flv|wmv)|https?:\/\/(?:cdn|media)\.discordapp\.com\/attachments\/\d+\/\d+\/[\w-]+\.(png|jpg|jpeg|gif)|https?:\/\/(?:www\.)?youtube\.com\/watch\?v=([\w-]{11})/;
   let msg = messageText, attachment, emojis = [], media = [];
   // Parse message of emojis and video/image links
   while (attachment = regex.exec(msg)) {
-    console.log("balls32131231");
     if (attachment[1]) {
       emojis.push([attachment.index, 'emoji', `https://cdn.discordapp.com/emojis/${attachment[1]}.png`]);
     } else if (attachment[2]) {
@@ -159,7 +158,10 @@ socket.on('startGame', (messageText) => {
 
   // switch to game page
   $('#roomContainer').hide();
+  $('#response').hide();
+  $('#userEntry').removeClass('block');
   $('#gameContainer').show();
+  $('#answer')[0].focus();
   document.documentElement.scrollTop = document.documentElement.scrollHeight;
 });
 
@@ -172,19 +174,16 @@ socket.on('gameEnd', () => {
 socket.on('playerListResponse', (playerListData) => {
   console.log('updating player list');
 
-  // parse player list data (map from username to score)
-  let playerList = new Set(JSON.parse(playerListData));
+  // parse player list data
+  let playerList = new Map(JSON.parse(playerListData));
 
   // clear tables
   $('#playerTable tbody').empty();
-  $('#scoreTable tbody').empty();
 
   // populate player list table with usernames
-  playerList.forEach((username) => {
-    // update room page's user table
-    const $playerTableRow = $('<tr></tr>');
-    $playerTableRow.append($('<td></td>').text(username));
-    $('#playerTable tbody').append($playerTableRow);
+  console.log(playerList.keys())
+  playerList.forEach((score, username) => {
+    $('#playerTable tbody').append(`<tr><td class="username">${username}</td><td class="score">${score}</td></tr>`);
   });
   
 });
@@ -244,4 +243,18 @@ function populateEntries(id, name, val, text, parent) {
 
 socket.on('updateCheckbox', (id, state) => {
   $(`#${id}`).prop('checked', state);
+});
+
+socket.on('roundTransition', (message) => {
+  $('#userEntry').addClass('block');
+  $('#answer').trigger('blur');
+  $('#answerButton').trigger('blur');
+  $('#responseMessageTextContainer').text(message);
+  $('#response').show();
+  document.documentElement.scrollTop = document.documentElement.scrollHeight;
+});
+
+socket.on('newHost', () => {
+  $('#settingsPanel').removeClass('block');
+  $('#startButton').removeClass('block');
 });
