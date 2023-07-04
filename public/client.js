@@ -178,13 +178,15 @@ socket.on('playerListResponse', (playerListData) => {
   // parse player list data
   let playerList = new Map(JSON.parse(playerListData));
 
+  let sortedPlayers = Array.from(playerList, ([username, score]) => ({ username, score }));
+  sortedPlayers.sort((a,b) => b.score - a.score);
+
   // clear tables
   $('#playerTable tbody').empty();
 
   // populate player list table with usernames
-  console.log(playerList.keys())
-  playerList.forEach((score, username) => {
-    $('#playerTable tbody').append(`<tr><td class="username">${username}</td><td class="score">${score}</td></tr>`);
+  sortedPlayers.forEach((player) => {
+    $('#playerTable tbody').append(`<tr><td class="username">${player.username}</td><td class="score">${player.score}</td></tr>`);
   });
   
 });
