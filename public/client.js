@@ -178,7 +178,7 @@ socket.on('playerListResponse', (playerListData) => {
   // parse player list data
   let playerList = new Map(JSON.parse(playerListData));
 
-  let sortedPlayers = Array.from(playerList, ([username, score]) => ({ username, score }));
+  let sortedPlayers = Array.from(playerList, ([username, playerData]) => ({ username, score: playerData.score, isHost: playerData.isHost }));
   sortedPlayers.sort((a,b) => b.score - a.score);
 
   // clear tables
@@ -186,6 +186,9 @@ socket.on('playerListResponse', (playerListData) => {
 
   // populate player list table with usernames
   sortedPlayers.forEach((player) => {
+    if(player.isHost) {
+      player.username += '👑';
+    }
     $('#playerTable tbody').append(`<tr><td class="username">${player.username}</td><td class="score">${player.score}</td></tr>`);
   });
   

@@ -13,7 +13,7 @@ const [PORT, IP] = parseTextFile();
 let roomMessageData = new Map();
 // map from room -> map about components of the parsed data (i.e. channels names/ids, usernames), keys: "channels", "users"
 let roomFilterData = new Map();
-// map from room -> {components of room (message, roundsLeft, inGame)}
+// map from room -> {components of room (message, roundsLeft, inGame, playerList)}
 let roomData = new Map();
 
 module.exports = {
@@ -120,10 +120,10 @@ io.on('connection', (socket) => {
             socket.roomID = roomID;
             socket.username = username;
             socket.join(roomID);
-            roomData.get(roomID).playerList.set(username, 0);
 
             // if there's not a host yet, make them new host
-            socket.isHost = (roomData.get(roomID).playerList.size == 1);
+            socket.isHost = (roomData.get(roomID).playerList.size == 0);
+            roomData.get(roomID).playerList.set(username, {score: 0, isHost: socket.isHost});
 
             socket.emit('joined', socket.isHost);
 
@@ -150,6 +150,7 @@ io.on('connection', (socket) => {
                     for (const socketID of socketRoom) {
                         const socketInRoom = io.sockets.sockets.get(socketID);
                         socketInRoom.isHost = true;
+                        roomData.get(socketInRoom.roomID).playerList.get(socketInRoom.username).isHost = true;
                         socketInRoom.emit('newHost');
                         break;
                     }
@@ -228,8 +229,8 @@ io.on('connection', (socket) => {
         }
 
         // Update player score
-        let playerScore = roomData.get(socket.roomID).playerList;
-        playerScore.set(socket.username, playerScore.get(socket.username) + 10);
+        let playerScore = roomData.get(socket.roomID).playerList.get(socket.username);
+        playerScore.score += 10;
         io.to(socket.roomID).emit('playerListResponse', JSON.stringify([...roomData.get(socket.roomID).playerList]));
         let answer = roomData.get(socket.roomID).message.GlobalName;
         console.log(`Answer was: ${answer}`);
