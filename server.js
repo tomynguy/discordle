@@ -7,7 +7,7 @@ const io = require('socket.io')(server);
 const fs = require('fs');
 const csv = require('csv-parser');
 
-const PORT = 3000;
+const [PORT, IP] = parseTextFile();
 
 // map from room -> parsed message data
 let roomMessageData = new Map();
@@ -18,7 +18,8 @@ let roomData = new Map();
 
 module.exports = {
     createRoom: createRoom,
-    PORT: PORT
+    PORT: PORT,
+    IP: IP
 };
 
 app.use(express.static('public'));
@@ -297,3 +298,9 @@ io.on('connection', (socket) => {
 server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
+
+function parseTextFile() {
+  const content = fs.readFileSync('config.txt', 'utf-8');
+  const matches = [...content.matchAll(/:\s*(.*?)$/gm)];
+  return matches.map((match) => match[1].trim());
+}

@@ -3,7 +3,7 @@ const { Client, GatewayIntentBits, ChannelType, CHANNEL_TYPES, PermissionsBitFie
 const fs = require('fs');
 const csvWriter = require('csv-writer').createObjectCsvWriter;
 
-let {createRoom, PORT} = require('./server.js');
+let {createRoom, PORT, IP} = require('./server.js');
 
 const client = new Client({
 	intents: [
@@ -87,7 +87,7 @@ client.on('messageCreate', async (message) => {
         try {
             await csvWriterInstance.writeRecords(messagesData);
             console.log(`Messages fetched and saved to ${message.guild.id}.csv`);
-            createRoom(`${message.guild.id}.csv`).then((roomID) => message.reply(`Link: http://localhost:${PORT}/?room=${roomID}`));
+            createRoom(`${message.guild.id}.csv`).then((roomID) => message.reply(`Link: http://${IP}:${PORT}/?room=${roomID}`));
           } catch (err) {
             console.error('Error writing to CSV file:', err);
             message.reply('An error occurred while retrieving the messages.');
@@ -99,7 +99,7 @@ client.on('messageCreate', async (message) => {
       
         fs.promises.access(filePath, fs.constants.F_OK)
           .then(() => createRoom(`${message.guild.id}.csv`))
-          .then((roomID) => message.reply(`Link: http://localhost:${PORT}/?room=${roomID}`))
+          .then((roomID) => message.reply(`Link: http://${IP}:${PORT}/?room=${roomID}`))
           .catch(() => message.reply('You need to use !fetch first.'));
       }
 });
