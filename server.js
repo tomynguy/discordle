@@ -229,8 +229,8 @@ io.on('connection', (socket) => {
         }
 
         // Update player score
-        let playerScore = roomData.get(socket.roomID).playerList.get(socket.username);
-        playerScore.score += 10;
+        roomData.get(socket.roomID).playerList.get(socket.username).score += 10;
+        
         io.to(socket.roomID).emit('playerListResponse', JSON.stringify([...roomData.get(socket.roomID).playerList]));
         let answer = roomData.get(socket.roomID).message.GlobalName;
         console.log(`Answer was: ${answer}`);
@@ -244,7 +244,7 @@ io.on('connection', (socket) => {
             io.to(socket.roomID).emit('roundTransition', `${socket.username} correctly guessed that the answer was ${answer}! Game Over!`);
             console.log("Game end!");
             roomData.get(socket.roomID).inGame = false;
-            playerScore.forEach((value, key) => playerScore.set(key, 0));
+            roomData.get(socket.roomID).playerList.forEach((value, key) => value.score = 0);
             setTimeout(() => {
                 io.to(socket.roomID).emit('gameEnd');
                 roomData.get(socket.roomID).transition = false;
@@ -263,7 +263,7 @@ io.on('connection', (socket) => {
                     io.to(socket.roomID).emit('error', 'No other messages found. Game will end.');
                     console.log("Game end!");
                     roomData.get(socket.roomID).inGame = false;
-                    playerScore.forEach((value, key) => playerScore.set(key, 0));
+                    roomData.get(socket.roomID).playerList.forEach((value, key) => value.score = 0);
                     io.to(socket.roomID).emit('gameEnd');
                     roomData.get(socket.roomID).transition = false;
                     io.to(socket.roomID).emit('playerListResponse', JSON.stringify([...roomData.get(socket.roomID).playerList]));
