@@ -287,6 +287,7 @@ function parseTextFile() {
   return matches.map((match) => match[1].trim());
 }
 
+// sets up and starts a new round
 function startRound(roomID) {
     const messages = roomMessageData.get(roomID);
 
@@ -335,7 +336,7 @@ function startRoundTimer(roomID) {
         // round finished
         if(roomData.get(roomID).roundsLeft == 1) {
             // last round, so send players back to room page
-            io.to(roomID).emit('roundTransition', `Times up! The sender was ${roomData.get(roomID).message.GlobalName}.`);
+            io.to(roomID).emit('roundTransition', `Times up! The sender was ${roomData.get(roomID).message.GlobalName}. Game Over!`);
             console.log("Game end!");
             roomData.get(roomID).inGame = false;
             roomData.get(roomID).playerList.forEach((value, key) => value.score = 0);
