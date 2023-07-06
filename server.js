@@ -219,6 +219,7 @@ io.on('connection', (socket) => {
         roomData.get(socket.roomID).inGame = true;
 
         // send startGame message to all users
+        io.to(roomID).emit('roundTimerUpdate', 'Game is starting...');
         io.to(socket.roomID).emit('startGame', randomMessage.Message);
         startRoundTimer(socket.roomID);
     });
@@ -312,6 +313,8 @@ function startRound(roomID) {
 
     roomData.get(roomID).message = randomMessage;
     roomData.get(roomID).roundsLeft = roomData.get(roomID).roundsLeft - 1;
+
+    io.to(roomID).emit('roundTimerUpdate', 'The next round is starting...');
 
     // send startGame message to all users
     setTimeout(() => {
