@@ -64,6 +64,10 @@
                 <p>Minimum Message Length:</p>
                 <input type="number" id="minMsgInput" value="0">
               </div>
+              <div>
+                <p>Guess Time:</p>
+                <input type="number" id="roundDurationInput" value="30">
+              </div>
             </div>
           </div>
           <button id="startButton">Start Game</button>
@@ -71,6 +75,7 @@
 
         <!-- Game Page -->
         <div id="gameContainer">
+          <p id="roundTimerDisplay">This text is the time left</p>
           <div class="chatContainer">
             <div class="messageContainer">
               <div class="messageLeft">

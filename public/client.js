@@ -213,7 +213,10 @@ socket.on('playerListResponse', (playerListData) => {
     const isHostElement = player.isHost ? 'yellow-text' : '';
   $('#playerTable tbody').append(`<tr><td class="username ${isHostElement}">${player.username}</td><td class="score">${player.score}</td></tr>`);
   });
-  
+});
+
+socket.on('roundTimerUpdate', (remainingTime) => {
+  $('#roundTimerDisplay').text(remainingTime);
 });
 
 socket.on('error', (error) => {
@@ -241,7 +244,8 @@ $('#startButton').on('click', function () {
     channels: JSON.stringify([...selectedChannels]),
     usernames: JSON.stringify([...selectedUsers]),
     numRounds: Math.max($('#numRoundsInput').val(), 1),
-    minMsg: Math.max($('#minMsgInput').val(), 1)
+    minMsg: Math.max($('#minMsgInput').val(), 1),
+    roundDuration: Math.max($('#roundDurationInput').val(), 1)
   };
 
   socket.emit('setupGame', JSON.stringify(serializedData));

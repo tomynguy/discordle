@@ -44,6 +44,8 @@ async function createRoom(file, recurse = 0) {
             selectedUsers: null,
             minMsg: 0,
             transition: false,
+            roundDuration: 30, // default 30 seconds
+            roundTimer: null
         });
     }
     return room;
@@ -195,6 +197,7 @@ io.on('connection', (socket) => {
         roomData.get(socket.roomID).selectedChannels = new Set(JSON.parse(data.channels));
         roomData.get(socket.roomID).selectedUsers = new Set(JSON.parse(data.usernames));
         roomData.get(socket.roomID).minMsg = data.minMsg;
+        roomData.get(socket.roomID).roundDuration = data.roundDuration;
 
         // select random message that fits these filters
         const messages = roomMessageData.get(socket.roomID);
@@ -217,6 +220,7 @@ io.on('connection', (socket) => {
 
         // send startGame message to all users
         io.to(socket.roomID).emit('startGame', randomMessage.Message);
+        startRoundTimer(socket.roomID);
     });
 
     socket.on('guessAnswer', (guess) => {
@@ -228,9 +232,13 @@ io.on('connection', (socket) => {
             return;
         }
 
+        // End round timer early since answer was found
+        clearInterval(roomData.get(roomID).roundTimer);
+        delete roomData.get(roomID).roundTimer;
+
         // Update player score
         roomData.get(socket.roomID).playerList.get(socket.username).score += 10;
-        
+
         io.to(socket.roomID).emit('playerListResponse', JSON.stringify([...roomData.get(socket.roomID).playerList]));
         let answer = roomData.get(socket.roomID).message.GlobalName;
         console.log(`Answer was: ${answer}`);
@@ -253,36 +261,9 @@ io.on('connection', (socket) => {
         }
         else {
             io.to(socket.roomID).emit('roundTransition', `${socket.username} correctly guessed that the answer was ${answer}!`);
-            const messages = roomMessageData.get(socket.roomID);
 
             // start next round
-            let randomMessage, i = 0;
-            do {
-                randomMessage = messages[Math.floor(Math.random() * messages.length)];
-                if (i++ == 1000) {
-                    io.to(socket.roomID).emit('error', 'No other messages found. Game will end.');
-                    console.log("Game end!");
-                    roomData.get(socket.roomID).inGame = false;
-                    roomData.get(socket.roomID).playerList.forEach((value, key) => value.score = 0);
-                    io.to(socket.roomID).emit('gameEnd');
-                    roomData.get(socket.roomID).transition = false;
-                    io.to(socket.roomID).emit('playerListResponse', JSON.stringify([...roomData.get(socket.roomID).playerList]));
-                    return;
-                }
-            }
-            while (!roomData.get(socket.roomID).selectedChannels.has(randomMessage.ChannelID) || 
-                    !roomData.get(socket.roomID).selectedUsers.has(randomMessage.GlobalName) ||
-                    randomMessage.Message.length < roomData.get(socket.roomID).minMsg
-                    );
-
-            roomData.get(socket.roomID).message = randomMessage;
-            roomData.get(socket.roomID).roundsLeft = roomData.get(socket.roomID).roundsLeft - 1;
-            
-            // send startGame message to all users
-            setTimeout(() => {
-                io.to(socket.roomID).emit('startGame', randomMessage.Message);
-                roomData.get(socket.roomID).transition = false;
-              }, 3500);
+            startRound(socket.roomID);
         }
     });
 
@@ -305,3 +286,73 @@ function parseTextFile() {
   const matches = [...content.matchAll(/:\s*(.*?)$/gm)];
   return matches.map((match) => match[1].trim());
 }
+
+function startRound(roomID) {
+    const messages = roomMessageData.get(roomID);
+
+    let randomMessage, i = 0;
+    do {
+        randomMessage = messages[Math.floor(Math.random() * messages.length)];
+        if (i++ == 1000) {
+            io.to(roomID).emit('error', 'No other messages found. Game will end.');
+            console.log("Game end!");
+            roomData.get(roomID).inGame = false;
+            roomData.get(roomID).playerList.forEach((value, key) => value.score = 0);
+            io.to(roomID).emit('gameEnd');
+            roomData.get(roomID).transition = false;
+            io.to(roomID).emit('playerListResponse', JSON.stringify([...roomData.get(roomID).playerList]));
+            return;
+        }
+    }
+    while (!roomData.get(roomID).selectedChannels.has(randomMessage.ChannelID) || 
+            !roomData.get(roomID).selectedUsers.has(randomMessage.GlobalName) ||
+            randomMessage.Message.length < roomData.get(roomID).minMsg
+            );
+
+    roomData.get(roomID).message = randomMessage;
+    roomData.get(roomID).roundsLeft = roomData.get(roomID).roundsLeft - 1;
+
+    // send startGame message to all users
+    setTimeout(() => {
+        io.to(roomID).emit('startGame', randomMessage.Message);
+        roomData.get(roomID).transition = false;
+        startRoundTimer(roomID);
+    }, 3500);
+}
+
+function startRoundTimer(roomID) {
+    let remainingTime = roomData.get(roomID).roundDuration;
+  
+    roomData.get(roomID).roundTimer = setInterval(() => {
+      io.to(roomID).emit('roundTimerUpdate', remainingTime);
+  
+      if (remainingTime <= 0) {
+        clearInterval(roomData.get(roomID).roundTimer);
+
+        // Transition period
+        roomData.get(roomID).transition = true;
+
+        // round finished
+        if(roomData.get(roomID).roundsLeft == 1) {
+            // last round, so send players back to room page
+            io.to(roomID).emit('roundTransition', `Times up! The sender was ${roomData.get(roomID).message.GlobalName}.`);
+            console.log("Game end!");
+            roomData.get(roomID).inGame = false;
+            roomData.get(roomID).playerList.forEach((value, key) => value.score = 0);
+            setTimeout(() => {
+                io.to(roomID).emit('gameEnd');
+                roomData.get(roomID).transition = false;
+                io.to(roomID).emit('playerListResponse', JSON.stringify([...roomData.get(roomID).playerList]));
+              }, 4000);
+        }
+        else {
+            io.to(roomID).emit('roundTransition', `Times up! The sender was ${roomData.get(roomID).message.GlobalName}.`);
+
+            // start next round
+            startRound(roomID);
+        }
+      }
+  
+      remainingTime--;
+    }, 1000);
+  }
