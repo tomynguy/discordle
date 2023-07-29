@@ -259,9 +259,11 @@ io.on('connection', (socket) => {
             roomData.get(socket.roomID).inGame = false;
             roomData.get(socket.roomID).playerList.forEach((value, key) => value.score = 0);
             setTimeout(() => {
-                io.to(socket.roomID).emit('gameEnd');
-                roomData.get(socket.roomID).transition = false;
-                io.to(socket.roomID).emit('playerListResponse', JSON.stringify([...roomData.get(socket.roomID).playerList]));
+                if (roomData.get(socket.roomID)) {
+                    io.to(socket.roomID).emit('gameEnd');
+                    roomData.get(socket.roomID).transition = false;
+                    io.to(socket.roomID).emit('playerListResponse', JSON.stringify([...roomData.get(socket.roomID).playerList]));
+                }
             }, 4000);
         } else {
             io.to(socket.roomID).emit('roundTransition', `${socket.username} correctly guessed that the answer was ${answer}!`, roomData.get(socket.roomID).message.Avatar, roomData.get(socket.roomID).message.GlobalName);
@@ -362,9 +364,11 @@ function startRoundTimer(roomID) {
                 roomData.get(roomID).inGame = false;
                 roomData.get(roomID).playerList.forEach((value, key) => value.score = 0);
                 setTimeout(() => {
-                    io.to(roomID).emit('gameEnd');
-                    roomData.get(roomID).transition = false;
-                    io.to(roomID).emit('playerListResponse', JSON.stringify([...roomData.get(roomID).playerList]));
+                    if (roomData.get(roomID)) {
+                        io.to(roomID).emit('gameEnd');
+                        roomData.get(roomID).transition = false;
+                        io.to(roomID).emit('playerListResponse', JSON.stringify([...roomData.get(roomID).playerList]));
+                    }
                 }, 4000);
             }
             else {
