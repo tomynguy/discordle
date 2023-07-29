@@ -1,6 +1,6 @@
 # Discordle
 
-Discordle is a fun and competitive game where users attempt to guess who sent a specific Discord message, chosen at random by a Discord bot. The fast-paced nature of the game makes it a thrilling and engaging experience for all Discord users. 
+Discordle is a fun and competitive game where users attempt to guess who sent a specific Discord message. The fast-paced nature of the game makes it a thrilling and engaging experience for all Discord users. 
 
 ## Project Description
 
