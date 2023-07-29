@@ -32,6 +32,7 @@ $('#answer').on('keydown', function(event) {
   }
 });
 
+// Update client checkboxes to match host
 $('#selectAllChannelsCheckbox').on('click', function () {
   // Get current state of select all checkbox
   const isChecked = this.checked;
@@ -44,6 +45,7 @@ $('#selectAllChannelsCheckbox').on('click', function () {
   });
 });
 
+// Update client checkboxes to match host
 $('#selectAllUsersCheckbox').on('click', function () {
   // Get current state of select all checkbox
   const isChecked = this.checked;
@@ -54,6 +56,11 @@ $('#selectAllUsersCheckbox').on('click', function () {
     const checkboxId = $(this).attr('id');
     socket.emit('clickCheckbox', checkboxId, isChecked);
   });
+});
+
+// Update client input-boxes to match host
+$('.genSettings').on('input', 'input', function() {
+  socket.emit('changeInput', this.id, this.value);
 });
 
 // Socket.io event listeners
@@ -276,6 +283,10 @@ function populateEntries(id, name, val, text, parent) {
 
 socket.on('updateCheckbox', (id, state) => {
   $(`#${id}`).prop('checked', state);
+});
+
+socket.on('updateInput', (id, value) => {
+  $(`#${id}`).val(value);
 });
 
 socket.on('roundTransition', (message) => {

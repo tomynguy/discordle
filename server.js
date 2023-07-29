@@ -269,8 +269,15 @@ io.on('connection', (socket) => {
     });
 
     socket.on('clickCheckbox', (id, state) => {
-        if (socket.isHost)
+        if (socket.isHost) {
             io.to(socket.roomID).emit('updateCheckbox', id, state);
+        }
+    });
+
+    socket.on('changeInput', (id, value) => {
+        if (socket.isHost) {
+            io.to(socket.roomID).emit('updateInput', id, value);
+        }
     });
 
     socket.on('playerListRequest', () => {
