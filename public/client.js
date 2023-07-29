@@ -194,6 +194,8 @@ socket.on('startGame', (messageText) => {
   $('#answer').val("");
   $('#gameContainer').show();
   $('#answer')[0].focus();
+  $('#msgPFP').attr('src', 'discordPFP.png');
+  $('#msgName').text('Discord User');
   document.documentElement.scrollTop = document.documentElement.scrollHeight;
 });
 
@@ -266,6 +268,7 @@ $('#answerButton').on('click', function () {
   return false;
 });
 
+// Helper function to setup checkboxes for settings.
 function populateEntries(id, name, val, text, parent) {
   const entry = $("<div>", {
     class: "entryContainer",
@@ -281,15 +284,20 @@ function populateEntries(id, name, val, text, parent) {
   $(parent).append(entry);
 }
 
+// Update client checkbox to match host
 socket.on('updateCheckbox', (id, state) => {
   $(`#${id}`).prop('checked', state);
 });
 
+// Update client input-box to match host
 socket.on('updateInput', (id, value) => {
   $(`#${id}`).val(value);
 });
 
-socket.on('roundTransition', (message) => {
+// Modify HTML to stop input and setup for next round
+socket.on('roundTransition', (message, userAvatar, username) => {
+  $('#msgPFP').attr('src', userAvatar);
+  $('#msgName').text(username);
   $('#userEntry').addClass('block');
   $('#answer').trigger('blur');
   $('#answerButton').trigger('blur');
@@ -298,6 +306,7 @@ socket.on('roundTransition', (message) => {
   document.documentElement.scrollTop = document.documentElement.scrollHeight;
 });
 
+// Remove settings wall for newhost
 socket.on('newHost', () => {
   $('#settingsPanel').removeClass('block');
   $('#startButton').removeClass('block');

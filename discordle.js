@@ -51,16 +51,16 @@ client.on('messageCreate', async (message) => {
                     msg.attachments.map((attachment) => attachments += attachment.url);
                     if (!msg.author.bot && (msg.content.length + attachments.length) > 0) {
                         const author = {
-                            globalName: msg.author.username,
-                            displayName: msg.member ? msg.member.user : '',
-                            nickname: msg.member ? msg.member.nickname : ''
+                            globalName: msg.author.username.toLowerCase(),
+                            displayName: msg.member.displayName.toLowerCase(),
+                            avatar: msg.author.avatarURL()
                         };
                         messagesData.push({
                             channel: channel.name,
                             channelID: channel.id,
                             globalName: author.globalName,
                             displayName: author.displayName,
-                            nickname: author.nickname,
+                            avatar: author.avatar,
                             message: msg.content + attachments
                         });
                     }
@@ -79,7 +79,7 @@ client.on('messageCreate', async (message) => {
                 { id: 'channelID', title: 'ChannelID' },
                 { id: 'globalName', title: 'GlobalName' },
                 { id: 'displayName', title: 'DisplayName' },
-                { id: 'nickname', title: 'Nickname' },
+                { id: 'avatar', title: 'Avatar' },
                 { id: 'message', title: 'Message' }
             ]
         });

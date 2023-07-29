@@ -54,25 +54,25 @@ async function createRoom(file, recurse = 0) {
 // given a CSV file name of the message data, parse it
 async function parseMessageData(path) {
     return new Promise((resolve, reject) => {
-      const results = [];
-  
-      fs.createReadStream(`parsedMessages/${path}`)
-        .pipe(csv())
-        .on('data', (data) => {
-          // Process each row of data
-          results.push(data);
-        })
-        .on('end', () => {
-          // CSV parsing is complete, resolve the promise with the results
-          console.log('CSV parsing completed.');
-          resolve(results);
-        })
-        .on('error', (error) => {
-          // Error occurred during CSV parsing, reject the promise
-          reject(error);
-        });
+        const results = [];
+
+        fs.createReadStream(`parsedMessages/${path}`)
+            .pipe(csv())
+            .on('data', (data) => {
+                // Process each row of data
+                results.push(data);
+            })
+            .on('end', () => {
+                // CSV parsing is complete, resolve the promise with the results
+                console.log('CSV parsing completed.');
+                resolve(results);
+            })
+            .on('error', (error) => {
+                // Error occurred during CSV parsing, reject the promise
+                reject(error);
+            });
     });
-  }
+}
 
 function getFilterData(roomID) {
     let channels = new Map();
@@ -84,24 +84,24 @@ function getFilterData(roomID) {
 
         // add channel
         channels.set(row.ChannelID, row.Channel);
-        
+
         // add username
         const alternateNames = {
             displayName: row.DisplayName,
             nickname: row.Nickname
         }
-        
-        if(!usernames.has(row.GlobalName)) {
+
+        if (!usernames.has(row.GlobalName)) {
             usernames.set(row.GlobalName, alternateNames);
             console.log(`${row.GlobalName}: ${alternateNames}`);
         }
 
-        
+
     }
 
     return {
         'channels': channels,
-        'usernames' : usernames
+        'usernames': usernames
     };
 }
 
@@ -125,7 +125,7 @@ io.on('connection', (socket) => {
 
             // if there's not a host yet, make them new host
             socket.isHost = (roomData.get(roomID).playerList.size == 0);
-            roomData.get(roomID).playerList.set(username, {score: 0, isHost: socket.isHost});
+            roomData.get(roomID).playerList.set(username, { score: 0, isHost: socket.isHost });
 
             socket.emit('joined', socket.isHost);
 
@@ -163,8 +163,8 @@ io.on('connection', (socket) => {
             io.to(socket.roomID).emit('playerListResponse', JSON.stringify([...roomData.get(socket.roomID).playerList]));
         }
     });
-    
-    
+
+
     // Event listener for getFilterData event
     // returns: a Map of all filter data (channels, usernames) associated with this room
     socket.on('getFilterData', () => {
@@ -188,7 +188,7 @@ io.on('connection', (socket) => {
 
     socket.on('setupGame', (settings) => {
         // ignore non-host requests
-        if(!socket.isHost) {
+        if (!socket.isHost) {
             socket.emit('error', 'Only the host can start the game');
             return;
         }
@@ -209,10 +209,10 @@ io.on('connection', (socket) => {
                 return;
             }
         }
-        while (!roomData.get(socket.roomID).selectedChannels.has(randomMessage.ChannelID) || 
-                !roomData.get(socket.roomID).selectedUsers.has(randomMessage.GlobalName) ||
-                randomMessage.Message.length < roomData.get(socket.roomID).minMsg
-                );
+        while (!roomData.get(socket.roomID).selectedChannels.has(randomMessage.ChannelID) ||
+        !roomData.get(socket.roomID).selectedUsers.has(randomMessage.GlobalName) ||
+            randomMessage.Message.length < roomData.get(socket.roomID).minMsg
+        );
 
         roomData.get(socket.roomID).message = randomMessage;
         roomData.get(socket.roomID).roundsLeft = data.numRounds;
@@ -226,9 +226,13 @@ io.on('connection', (socket) => {
 
     socket.on('guessAnswer', (guess) => {
         // Return if room is in transition period
-        if (roomData.get(socket.roomID).transition) return;
+        if (roomData.get(socket.roomID).transition) {
+            return;
+        }
 
-        if(guess.toLowerCase() != roomData.get(socket.roomID).message.GlobalName.toLowerCase() && guess.toLowerCase() != "balls") {
+        // Return if guess is incorrect
+        guess = guess.toLowerCase();
+        if (guess != roomData.get(socket.roomID).message.GlobalName && guess != roomData.get(socket.roomID).message.DisplayName && guess != "balls") {
             console.log(`${socket.username}'s guess was wrong!`);
             return;
         }
@@ -243,14 +247,14 @@ io.on('connection', (socket) => {
         io.to(socket.roomID).emit('playerListResponse', JSON.stringify([...roomData.get(socket.roomID).playerList]));
         let answer = roomData.get(socket.roomID).message.GlobalName;
         console.log(`Answer was: ${answer}`);
-        
+
         // Transition period
         roomData.get(socket.roomID).transition = true;
 
         // round finished
-        if(roomData.get(socket.roomID).roundsLeft == 1) {
+        if (roomData.get(socket.roomID).roundsLeft == 1) {
             // last round, so send players back to room page
-            io.to(socket.roomID).emit('roundTransition', `${socket.username} correctly guessed that the answer was ${answer}! Game Over!`);
+            io.to(socket.roomID).emit('roundTransition', `${socket.username} correctly guessed that the answer was ${answer}! Game Over!`, roomData.get(socket.roomID).message.Avatar, roomData.get(socket.roomID).message.GlobalName);
             console.log("Game end!");
             roomData.get(socket.roomID).inGame = false;
             roomData.get(socket.roomID).playerList.forEach((value, key) => value.score = 0);
@@ -258,10 +262,9 @@ io.on('connection', (socket) => {
                 io.to(socket.roomID).emit('gameEnd');
                 roomData.get(socket.roomID).transition = false;
                 io.to(socket.roomID).emit('playerListResponse', JSON.stringify([...roomData.get(socket.roomID).playerList]));
-              }, 4000);
-        }
-        else {
-            io.to(socket.roomID).emit('roundTransition', `${socket.username} correctly guessed that the answer was ${answer}!`);
+            }, 4000);
+        } else {
+            io.to(socket.roomID).emit('roundTransition', `${socket.username} correctly guessed that the answer was ${answer}!`, roomData.get(socket.roomID).message.Avatar, roomData.get(socket.roomID).message.GlobalName);
 
             // start next round
             startRound(socket.roomID);
@@ -290,9 +293,9 @@ server.listen(PORT, () => {
 });
 
 function parseTextFile() {
-  const content = fs.readFileSync('config.txt', 'utf-8');
-  const matches = [...content.matchAll(/:\s*(.*?)$/gm)];
-  return matches.map((match) => match[1].trim());
+    const content = fs.readFileSync('config.txt', 'utf-8');
+    const matches = [...content.matchAll(/:\s*(.*?)$/gm)];
+    return matches.map((match) => match[1].trim());
 }
 
 // sets up and starts a new round
@@ -313,10 +316,10 @@ function startRound(roomID) {
             return;
         }
     }
-    while (!roomData.get(roomID).selectedChannels.has(randomMessage.ChannelID) || 
-            !roomData.get(roomID).selectedUsers.has(randomMessage.GlobalName) ||
-            randomMessage.Message.length < roomData.get(roomID).minMsg
-            );
+    while (!roomData.get(roomID).selectedChannels.has(randomMessage.ChannelID) ||
+    !roomData.get(roomID).selectedUsers.has(randomMessage.GlobalName) ||
+        randomMessage.Message.length < roomData.get(roomID).minMsg
+    );
 
     roomData.get(roomID).message = randomMessage;
     roomData.get(roomID).roundsLeft = roomData.get(roomID).roundsLeft - 1;
@@ -325,45 +328,53 @@ function startRound(roomID) {
 
     // send startGame message to all users
     setTimeout(() => {
-        io.to(roomID).emit('startGame', randomMessage.Message);
-        roomData.get(roomID).transition = false;
-        startRoundTimer(roomID);
+        if (roomData.get(roomID)) {
+            io.to(roomID).emit('startGame', randomMessage.Message);
+            roomData.get(roomID).transition = false;
+            startRoundTimer(roomID);
+        }
     }, 3500);
 }
 
 function startRoundTimer(roomID) {
     let remainingTime = roomData.get(roomID).roundDuration;
-  
+
     roomData.get(roomID).roundTimer = setInterval(() => {
-      io.to(roomID).emit('roundTimerUpdate', remainingTime);
-  
-      if (remainingTime <= 0) {
-        clearInterval(roomData.get(roomID).roundTimer);
+        io.to(roomID).emit('roundTimerUpdate', remainingTime);
 
-        // Transition period
-        roomData.get(roomID).transition = true;
+        if (remainingTime <= 0) {
 
-        // round finished
-        if(roomData.get(roomID).roundsLeft == 1) {
-            // last round, so send players back to room page
-            io.to(roomID).emit('roundTransition', `Times up! The sender was ${roomData.get(roomID).message.GlobalName}. Game Over!`);
-            console.log("Game end!");
-            roomData.get(roomID).inGame = false;
-            roomData.get(roomID).playerList.forEach((value, key) => value.score = 0);
-            setTimeout(() => {
-                io.to(roomID).emit('gameEnd');
-                roomData.get(roomID).transition = false;
-                io.to(roomID).emit('playerListResponse', JSON.stringify([...roomData.get(roomID).playerList]));
-              }, 4000);
+            // Case: Room gets deleted when timer hits zero
+            if (!roomData.get(roomID)) {
+                return;
+            }
+
+            clearInterval(roomData.get(roomID).roundTimer);
+
+            // Transition period
+            roomData.get(roomID).transition = true;
+
+            // round finished
+            if (roomData.get(roomID).roundsLeft == 1) {
+                // last round, so send players back to room page
+                io.to(roomID).emit('roundTransition', `Times up! The sender was ${roomData.get(roomID).message.GlobalName}. Game Over!`, roomData.get(roomID).message.Avatar, roomData.get(roomID).message.GlobalName);
+                console.log("Game end!");
+                roomData.get(roomID).inGame = false;
+                roomData.get(roomID).playerList.forEach((value, key) => value.score = 0);
+                setTimeout(() => {
+                    io.to(roomID).emit('gameEnd');
+                    roomData.get(roomID).transition = false;
+                    io.to(roomID).emit('playerListResponse', JSON.stringify([...roomData.get(roomID).playerList]));
+                }, 4000);
+            }
+            else {
+                io.to(roomID).emit('roundTransition', `Times up! The sender was ${roomData.get(roomID).message.GlobalName}.`, roomData.get(roomID).message.Avatar, roomData.get(roomID).message.GlobalName);
+
+                // start next round
+                startRound(roomID);
+            }
         }
-        else {
-            io.to(roomID).emit('roundTransition', `Times up! The sender was ${roomData.get(roomID).message.GlobalName}.`);
 
-            // start next round
-            startRound(roomID);
-        }
-      }
-  
-      remainingTime--;
+        remainingTime--;
     }, 1000);
-  }
+}
