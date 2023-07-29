@@ -4,6 +4,7 @@ const socket = io();
 let roomID = "none";
 let username = "none";
 let host = false;
+let usersList = [];
 
 // Event listeners
 $('#joinButton').on('click', function () {
@@ -97,9 +98,11 @@ socket.on('filterDataResponse', (filterData) => {
     populateEntries(i, 'channel', channelID, channelName, `#col${i++ % 3}`);
   });
 
+  usersList = [];
   // populate channel filter form with each channel
-  usernames.forEach(({ displayName, nickname }, globalName) => {
+  usernames.forEach((displayName, globalName) => {
     populateEntries(i, 'username', globalName, globalName, `#col${i++ % 3 + 3}`);
+    usersList.push(globalName, displayName);
   });
 
   // Visually disable settings for non-hosts.
@@ -165,7 +168,7 @@ socket.on('startGame', (messageText) => {
 
   // Add autocomplete to input
   $("#answer").autocomplete({
-    source: $('input[type="checkbox"]:checked').map(function() {return this.value;}).toArray()
+    source: usersList
   });
 
   // Append media to the end of the message

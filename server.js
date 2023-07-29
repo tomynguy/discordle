@@ -85,15 +85,9 @@ function getFilterData(roomID) {
         // add channel
         channels.set(row.ChannelID, row.Channel);
 
-        // add username
-        const alternateNames = {
-            displayName: row.DisplayName,
-            nickname: row.Nickname
-        }
-
+        // add user's names
         if (!usernames.has(row.GlobalName)) {
-            usernames.set(row.GlobalName, alternateNames);
-            console.log(`${row.GlobalName}: ${alternateNames}`);
+            usernames.set(row.GlobalName, row.DisplayName);
         }
 
 
